@@ -1,0 +1,37 @@
+from django import forms
+from .models import Material
+
+
+class MaterialForm(forms.ModelForm):
+    class Meta:
+        model = Material
+
+        fields = [
+            "nome",
+            "descricao",
+            "categoria",
+            "quantidade",
+            "estoque_minimo",
+            "unidade_medida",
+        ]
+
+        widgets = {
+            "nome": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "descricao": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+            "categoria": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "quantidade": forms.NumberInput(
+                attrs={"class": "form-control", "min": 0}
+            ),
+            "estoque_minimo": forms.NumberInput(
+                attrs={"class": "form-control", "min": 0}
+            ),
+            "unidade_medida": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+        }
