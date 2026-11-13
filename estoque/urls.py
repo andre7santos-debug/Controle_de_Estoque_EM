@@ -47,4 +47,24 @@ urlpatterns = [
         views.excluir_categoria,
         name="excluir_categoria"
     ),
+    path(
+        "equipamentos/",
+        views.lista_equipamentos,
+        name="lista_equipamentos"
+    ),
+    path(
+        "equipamentos/novo/",
+        views.cadastrar_equipamento,
+        name="cadastrar_equipamento"
+    ),
+    path(
+        "equipamentos/<int:pk>/editar/",
+        views.editar_equipamento,
+        name="editar_equipamento"
+    ),
+    path(
+        "equipamentos/<int:pk>/excluir/",
+        views.excluir_equipamento,
+        name="excluir_equipamento"
+    ),
 ]

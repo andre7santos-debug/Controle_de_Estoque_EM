@@ -1,16 +1,15 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.deletion import ProtectedError
 
-from .models import Material, Categoria
-from .forms import MaterialForm, CategoriaForm
-
+from .models import Material, Categoria, Equipamento
+from .forms import MaterialForm, CategoriaForm, EquipamentoForm
 
 def home(request):
     return render(request, "estoque/home.html")
-
 
 def lista_materiais(request):
     materiais = Material.objects.select_related("categoria").all()
@@ -188,3 +187,87 @@ def excluir_categoria(request, pk):
         {"categoria": categoria}
     )
 
+def lista_equipamentos(request):
+    equipamentos = Equipamento.objects.select_related(
+        "categoria"
+    ).order_by("nome")
+
+    return render(
+        request,
+        "estoque/lista_equipamentos.html",
+        {"equipamentos": equipamentos}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def cadastrar_equipamento(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = EquipamentoForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Equipamento cadastrado com sucesso!"
+            )
+            return redirect("lista_equipamentos")
+    else:
+        form = EquipamentoForm()
+
+    return render(
+        request,
+        "estoque/form_equipamento.html",
+        {"form": form, "titulo": "Cadastrar equipamento"}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def editar_equipamento(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    equipamento = get_object_or_404(Equipamento, pk=pk)
+
+    if request.method == "POST":
+        form = EquipamentoForm(request.POST, instance=equipamento)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Equipamento atualizado com sucesso!"
+            )
+            return redirect("lista_equipamentos")
+    else:
+        form = EquipamentoForm(instance=equipamento)
+
+    return render(
+        request,
+        "estoque/form_equipamento.html",
+        {"form": form, "titulo": "Editar equipamento"}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def excluir_equipamento(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    equipamento = get_object_or_404(Equipamento, pk=pk)
+
+    if request.method == "POST":
+        equipamento.delete()
+        messages.success(
+            request,
+            "Equipamento excluído com sucesso!"
+        )
+        return redirect("lista_equipamentos")
+
+    return render(
+        request,
+        "estoque/excluir_equipamento.html",
+        {"equipamento": equipamento}
+    )

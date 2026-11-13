@@ -1,6 +1,5 @@
 from django import forms
-from .models import Material, Categoria
-
+from .models import Material, Categoria, Equipamento
 
 class MaterialForm(forms.ModelForm):
     class Meta:
@@ -48,3 +47,33 @@ class CategoriaForm(forms.ModelForm):
                 attrs={"class": "form-control", "rows": 3}
             ),
         }
+class EquipamentoForm(forms.ModelForm):
+    class Meta:
+        model = Equipamento
+
+        fields = [
+            "nome",
+            "descricao",
+            "categoria",
+            "numero_patrimonio",
+            "status",
+        ]
+
+        widgets = {
+            "nome": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "descricao": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+            "categoria": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "numero_patrimonio": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "status": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+        }
+
