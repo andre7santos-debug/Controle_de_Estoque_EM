@@ -45,6 +45,7 @@
                         <th>Quantidade</th>
                         <th>Unidade</th>
                         <th>Estoque mínimo</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,10 +56,26 @@
                         <td>{{ material.quantidade }}</td>
                         <td>{{ material.unidade_medida }}</td>
                         <td>{{ material.estoque_minimo }}</td>
+                        <td>
+                            {% if user.is_staff %}
+                                <a href="{% url 'editar_material' material.pk %}"
+                                class="btn btn-warning btn-sm">
+                                    Editar
+                                </a>
+
+                                <a href="{% url 'excluir_material' material.pk %}"
+                                class="btn btn-danger btn-sm">
+                                    Excluir
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center">
+                        <td colspan="6" class="text-center">
                             Nenhum material cadastrado.
                         </td>
                     </tr>
