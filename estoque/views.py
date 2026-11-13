@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db.models.deletion import ProtectedError
 
-from .models import Material
-from .forms import MaterialForm
+from .models import Material, Categoria
+from .forms import MaterialForm, CategoriaForm
 
 
 def home(request):
@@ -93,3 +94,97 @@ def excluir_material(request, pk):
         "estoque/excluir_material.html",
         {"material": material}
     )
+
+
+@login_required(login_url="/admin/login/")
+def lista_categorias(request):
+    categorias = Categoria.objects.all().order_by("nome")
+
+    return render(
+        request,
+        "estoque/lista_categorias.html",
+        {"categorias": categorias}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def cadastrar_categoria(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = CategoriaForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Categoria cadastrada com sucesso!"
+            )
+            return redirect("lista_categorias")
+    else:
+        form = CategoriaForm()
+
+    return render(
+        request,
+        "estoque/form_categoria.html",
+        {"form": form, "titulo": "Cadastrar categoria"}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def editar_categoria(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    categoria = get_object_or_404(Categoria, pk=pk)
+
+    if request.method == "POST":
+        form = CategoriaForm(request.POST, instance=categoria)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Categoria atualizada com sucesso!"
+            )
+            return redirect("lista_categorias")
+    else:
+        form = CategoriaForm(instance=categoria)
+
+    return render(
+        request,
+        "estoque/form_categoria.html",
+        {"form": form, "titulo": "Editar categoria"}
+    )
+
+
+@login_required(login_url="/admin/login/")
+def excluir_categoria(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    categoria = get_object_or_404(Categoria, pk=pk)
+
+    if request.method == "POST":
+        try:
+            categoria.delete()
+            messages.success(
+                request,
+                "Categoria excluída com sucesso!"
+            )
+        except ProtectedError:
+            messages.error(
+                request,
+                "Não é possível excluir esta categoria, pois "
+                "ela possui materiais ou equipamentos vinculados."
+            )
+
+        return redirect("lista_categorias")
+
+    return render(
+        request,
+        "estoque/excluir_categoria.html",
+        {"categoria": categoria}
+    )
+

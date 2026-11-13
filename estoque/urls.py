@@ -27,4 +27,24 @@ urlpatterns = [
         views.excluir_material,
         name="excluir_material"
     ),
+        path(
+        "categorias/",
+        views.lista_categorias,
+        name="lista_categorias"
+    ),
+    path(
+        "categorias/nova/",
+        views.cadastrar_categoria,
+        name="cadastrar_categoria"
+    ),
+    path(
+        "categorias/<int:pk>/editar/",
+        views.editar_categoria,
+        name="editar_categoria"
+    ),
+    path(
+        "categorias/<int:pk>/excluir/",
+        views.excluir_categoria,
+        name="excluir_categoria"
+    ),
 ]

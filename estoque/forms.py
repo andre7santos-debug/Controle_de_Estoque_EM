@@ -1,5 +1,5 @@
 from django import forms
-from .models import Material
+from .models import Material, Categoria
 
 
 class MaterialForm(forms.ModelForm):
@@ -33,5 +33,18 @@ class MaterialForm(forms.ModelForm):
             ),
             "unidade_medida": forms.TextInput(
                 attrs={"class": "form-control"}
+            ),
+        }
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = ["nome", "descricao"]
+
+        widgets = {
+            "nome": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+            "descricao": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
             ),
         }
