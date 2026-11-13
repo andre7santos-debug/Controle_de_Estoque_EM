@@ -67,4 +67,9 @@ urlpatterns = [
         views.excluir_equipamento,
         name="excluir_equipamento"
     ),
+    path(
+    "movimentacoes/nova/",
+    views.registrar_movimentacao,
+    name="registrar_movimentacao"
+    ),
 ]

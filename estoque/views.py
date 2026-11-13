@@ -4,9 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models.deletion import ProtectedError
+from django.db import transaction
+from django.db.models import F
 
-from .models import Material, Categoria, Equipamento
-from .forms import MaterialForm, CategoriaForm, EquipamentoForm
+from .models import Material, Categoria, Equipamento, Movimentacao
+from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm
 
 def home(request):
     return render(request, "estoque/home.html")
@@ -270,4 +272,57 @@ def excluir_equipamento(request, pk):
         request,
         "estoque/excluir_equipamento.html",
         {"equipamento": equipamento}
+    )
+
+@login_required(login_url="/admin/login/")
+def registrar_movimentacao(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = MovimentacaoForm(request.POST)
+
+        if form.is_valid():
+            dados = form.cleaned_data
+
+            with transaction.atomic():
+                material = Material.objects.select_for_update().get(
+                    pk=dados["material"].pk
+                )
+
+                quantidade = dados["quantidade"]
+                tipo = dados["tipo"]
+
+                if tipo == "saida" and quantidade > material.quantidade:
+                    form.add_error(
+                        "quantidade",
+                        "Estoque insuficiente para realizar esta saída."
+                    )
+                else:
+                    variacao = (
+                        quantidade if tipo == "entrada"
+                        else -quantidade
+                    )
+
+                    Material.objects.filter(pk=material.pk).update(
+                        quantidade=F("quantidade") + variacao
+                    )
+
+                    movimentacao = form.save(commit=False)
+                    movimentacao.responsavel = request.user
+                    movimentacao.save()
+
+                    messages.success(
+                        request,
+                        "Movimentação registrada com sucesso!"
+                    )
+
+                    return redirect("lista_materiais")
+    else:
+        form = MovimentacaoForm()
+
+    return render(
+        request,
+        "estoque/registrar_movimentacao.html",
+        {"form": form}
     )

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Material, Categoria, Equipamento
+from .models import Material, Categoria, Equipamento, Movimentacao
 
 class MaterialForm(forms.ModelForm):
     class Meta:
@@ -76,4 +76,39 @@ class EquipamentoForm(forms.ModelForm):
                 attrs={"class": "form-select"}
             ),
         }
+class MovimentacaoForm(forms.ModelForm):
+    class Meta:
+        model = Movimentacao
+
+        fields = [
+            "material",
+            "tipo",
+            "quantidade",
+            "observacao",
+        ]
+
+        widgets = {
+            "material": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "tipo": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "quantidade": forms.NumberInput(
+                attrs={"class": "form-control", "min": 1}
+            ),
+            "observacao": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+        }
+
+    def clean_quantidade(self):
+        quantidade = self.cleaned_data["quantidade"]
+
+        if quantidade <= 0:
+            raise forms.ValidationError(
+                "A quantidade deve ser maior que zero."
+            )
+
+        return quantidade
 

@@ -53,3 +53,37 @@ class Equipamento(models.Model):
 
     def __str__(self):
         return self.nome
+    
+
+class Movimentacao(models.Model):
+
+    TIPO_CHOICES = [
+        ("entrada", "Entrada"),
+        ("saida", "Saída"),
+    ]
+
+    material = models.ForeignKey(
+        Material,
+        on_delete=models.PROTECT,
+        related_name="movimentacoes"
+    )
+
+    tipo = models.CharField(
+        max_length=10,
+        choices=TIPO_CHOICES
+    )
+
+    quantidade = models.PositiveIntegerField()
+
+    data = models.DateTimeField(auto_now_add=True)
+
+    responsavel = models.ForeignKey(
+        "auth.User",
+        on_delete=models.PROTECT
+    )
+
+    observacao = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.material.nome}"
+
