@@ -11,7 +11,18 @@ from .models import Material, Categoria, Equipamento, Movimentacao
 from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm
 
 def home(request):
-    return render(request, "estoque/home.html")
+    materiais_criticos = Material.objects.filter(
+        quantidade__lte=F("estoque_minimo")
+    ) | Material.objects.filter(quantidade=0)
+
+    return render(
+        request,
+        "estoque/home.html",
+        {
+            "materiais_criticos": materiais_criticos,
+            "total_alertas": materiais_criticos.count()
+        }
+    )
 
 def lista_materiais(request):
     materiais = Material.objects.select_related("categoria").all()

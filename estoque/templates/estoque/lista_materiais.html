@@ -39,7 +39,7 @@
                 Ver histórico
             </a>
         </div>
-        
+
             {% if messages %}
                 {% for message in messages %}
                 <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">
@@ -57,6 +57,7 @@
                         <th>Quantidade</th>
                         <th>Unidade</th>
                         <th>Estoque mínimo</th>
+                        <th>Situação</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -68,6 +69,23 @@
                         <td>{{ material.quantidade }}</td>
                         <td>{{ material.unidade_medida }}</td>
                         <td>{{ material.estoque_minimo }}</td>
+                        <td>
+                            {% if material.situacao_estoque == "esgotado" %}
+                                <span class="badge bg-danger">
+                                    Esgotado
+                                </span>
+
+                            {% elif material.situacao_estoque == "baixo" %}
+                                <span class="badge bg-warning text-dark">
+                                    Estoque baixo
+                                </span>
+
+                            {% else %}
+                                <span class="badge bg-success">
+                                    Normal
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if user.is_staff %}
                                 <a href="{% url 'editar_material' material.pk %}"
@@ -91,7 +109,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="7" class="text-center">
                             Nenhum material cadastrado.
                         </td>
                     </tr>
@@ -99,7 +117,7 @@
                 </tbody>
             </table>
         </div>
-
+        
         <a href="{% url 'home' %}" class="btn btn-secondary">
             Voltar ao painel
         </a>

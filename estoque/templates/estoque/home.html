@@ -15,11 +15,37 @@
             <span class="navbar-brand mb-0 h1">
                 Estoque Maker
             </span>
-        </div>
+            .\venv\Scripts\python.exe manage.py check        </div>
     </nav>
 
     <main class="container mt-5">
         <h1>Painel de Controle</h1>
+        {% if total_alertas > 0 %}
+        <div class="alert alert-warning">
+            <h5>Alerta de estoque!</h5>
+
+            <p>
+                Existem {{ total_alertas }} materiais com
+                estoque baixo ou esgotado.
+            </p>
+
+            <ul>
+                {% for material in materiais_criticos %}
+                <li>
+                    {{ material.nome }}:
+                    {{ material.quantidade }}
+                    {{ material.unidade_medida }}
+                </li>
+                {% endfor %}
+        </ul>
+
+        <a href="{% url 'lista_materiais' %}"
+        class="btn btn-warning btn-sm">
+            Consultar estoque
+        </a>
+    </div>
+    {% endif %}
+
         <p class="text-muted">
             Sistema de Controle de Estoque do Espaço Maker
         </p>

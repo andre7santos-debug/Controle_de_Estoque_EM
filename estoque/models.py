@@ -12,16 +12,41 @@ class Categoria(models.Model):
 class Material(models.Model):
     nome = models.CharField(max_length=150)
     descricao = models.TextField(blank=True)
+
     categoria = models.ForeignKey(
         Categoria,
         on_delete=models.PROTECT,
         related_name="materiais"
     )
+
     quantidade = models.PositiveIntegerField(default=0)
     estoque_minimo = models.PositiveIntegerField(default=0)
     unidade_medida = models.CharField(max_length=30, default="unidade")
 
+    @property
+    def situacao_estoque(self):
+        if self.quantidade == 0:
+            return "esgotado"
+
+        if self.quantidade <= self.estoque_minimo:
+            return "baixo"
+
+        return "normal"
+
     def __str__(self):
+        return self.nome
+
+@property
+def situacao_estoque(self):
+        if self.quantidade == 0:
+            return "esgotado"
+
+        if self.quantidade <= self.estoque_minimo:
+            return "baixo"
+
+        return "normal"
+
+def __str__(self):
         return self.nome
 
 
