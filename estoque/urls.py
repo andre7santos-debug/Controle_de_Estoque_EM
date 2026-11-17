@@ -72,4 +72,9 @@ urlpatterns = [
     views.registrar_movimentacao,
     name="registrar_movimentacao"
     ),
+    path(
+    "movimentacoes/",
+    views.lista_movimentacoes,
+    name="lista_movimentacoes"
+    ),
 ]

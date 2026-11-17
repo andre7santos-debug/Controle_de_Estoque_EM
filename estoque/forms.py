@@ -111,4 +111,12 @@ class MovimentacaoForm(forms.ModelForm):
             )
 
         return quantidade
-
+class MaterialEdicaoForm(MaterialForm):
+    class Meta(MaterialForm.Meta):
+        fields = [
+            "nome",
+            "descricao",
+            "categoria",
+            "estoque_minimo",
+            "unidade_medida",
+        ]

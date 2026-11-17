@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import F
 
 from .models import Material, Categoria, Equipamento, Movimentacao
-from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm
+from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm
 
 def home(request):
     return render(request, "estoque/home.html")
@@ -48,6 +48,7 @@ def cadastrar_material(request):
     )
 
 
+
 @login_required(login_url="/admin/login/")
 def editar_material(request, pk):
     if not request.user.is_staff:
@@ -56,23 +57,35 @@ def editar_material(request, pk):
     material = get_object_or_404(Material, pk=pk)
 
     if request.method == "POST":
-        form = MaterialForm(request.POST, instance=material)
+        form = MaterialEdicaoForm(
+            request.POST,
+            instance=material
+        )
 
         if form.is_valid():
-            form.save()
-            messages.success(
-                request,
-                "Material atualizado com sucesso!"
-            )
-            return redirect("lista_materiais")
+            with transaction.atomic():
+                material = Material.objects.select_for_update().get(pk=pk)
+                form = MaterialEdicaoForm(
+                    request.POST,
+                    instance=material
+                )
+
+                if form.is_valid():
+                    form.save()
+                    messages.success(
+                        request,
+                        "Material atualizado com sucesso!"
+                    )
+                    return redirect("lista_materiais")
     else:
-        form = MaterialForm(instance=material)
+        form = MaterialEdicaoForm(instance=material)
 
     return render(
         request,
         "estoque/editar_material.html",
         {"form": form, "material": material}
     )
+
 
 
 @login_required(login_url="/admin/login/")
@@ -83,11 +96,52 @@ def excluir_material(request, pk):
     material = get_object_or_404(Material, pk=pk)
 
     if request.method == "POST":
-        material.delete()
-        messages.success(
-            request,
-            "Material excluído com sucesso!"
-        )
+        try:
+            material.delete()
+
+            messages.success(
+                request,
+                "Material excluído com sucesso!"
+            )
+
+        except ProtectedError:
+            messages.error(
+                request,
+                "Não é possível excluir este material, "
+                "pois ele possui movimentações registradas."
+            )
+
+        return redirect("lista_materiais")
+
+    return render(
+        request,
+        "estoque/excluir_material.html",
+        {"material": material}
+    )
+
+@login_required(login_url="/admin/login/")
+def excluir_material(request, pk):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    material = get_object_or_404(Material, pk=pk)
+
+    if request.method == "POST":
+        try:
+            material.delete()
+
+            messages.success(
+                request,
+                "Material excluído com sucesso!"
+            )
+
+        except ProtectedError:
+            messages.error(
+                request,
+                "Não é possível excluir este material, "
+                "pois ele possui movimentações registradas."
+            )
+
         return redirect("lista_materiais")
 
     return render(
@@ -325,4 +379,16 @@ def registrar_movimentacao(request):
         request,
         "estoque/registrar_movimentacao.html",
         {"form": form}
+    )
+
+@login_required(login_url="/admin/login/")
+def lista_movimentacoes(request):
+    movimentacoes = Movimentacao.objects.select_related(
+        "material", "responsavel"
+    ).order_by("-data")
+
+    return render(
+        request,
+        "estoque/lista_movimentacoes.html",
+        {"movimentacoes": movimentacoes}
     )

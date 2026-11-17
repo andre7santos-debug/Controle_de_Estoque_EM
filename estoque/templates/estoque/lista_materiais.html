@@ -18,26 +18,34 @@
     </nav>
 
     <main class="container mt-5">
-        <h1>Materiais cadastrados</h1>
-        <p class="text-muted">Consulta do estoque do Espaço Maker</p>
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
 
             {% if user.is_staff %}
+
             <a href="{% url 'cadastrar_material' %}"
-            class="btn btn-primary mt-3">
+            class="btn btn-primary">
                 + Novo material
-                <a href="{% url 'registrar_movimentacao' %}"
-                class="btn btn-success mb-3">
-                + Registrar movimentação
-                </a>
             </a>
+
+            <a href="{% url 'registrar_movimentacao' %}"
+            class="btn btn-success">
+                + Registrar movimentação
+            </a>
+
             {% endif %}
 
+            <a href="{% url 'lista_movimentacoes' %}"
+            class="btn btn-outline-primary">
+                Ver histórico
+            </a>
+        </div>
+        
             {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-success mt-3">
+                {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">
                     {{ message }}
                 </div>
-            {% endfor %}
+                {% endfor %}
             {% endif %}
 
         <div class="table-responsive">
@@ -70,6 +78,10 @@
                                 <a href="{% url 'excluir_material' material.pk %}"
                                 class="btn btn-danger btn-sm">
                                     Excluir
+                                </a>
+                                <a href="{% url 'lista_movimentacoes' %}"
+                                class="btn btn-outline-primary mb-3">
+                                     Ver histórico
                                 </a>
                             {% else %}
                                 -
