@@ -148,5 +148,14 @@ class Emprestimo(models.Model):
 
     def __str__(self):
         return f"{self.equipamento.nome} - {self.solicitante}"
+    @property
+    def situacao(self):
+        if self.data_devolucao is not None:
+            return "devolvido"
+
+        if self.previsao_devolucao < timezone.localdate():
+            return "atrasado"
+
+        return "emprestado"
 
 

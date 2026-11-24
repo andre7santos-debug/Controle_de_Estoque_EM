@@ -122,7 +122,6 @@ class MaterialEdicaoForm(MaterialForm):
             "unidade_medida",
         ]
 
-
 class EmprestimoForm(forms.ModelForm):
     class Meta:
         model = Emprestimo
@@ -196,4 +195,3 @@ class EmprestimoForm(forms.ModelForm):
                 )
 
         return cleaned_data
-

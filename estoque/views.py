@@ -8,25 +8,52 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo
-from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm, EmprestimoForm
+from .models import (
+    Material,
+    Categoria,
+    Equipamento,
+    Movimentacao,
+    Emprestimo,
+)
+
+from .forms import (
+    MaterialForm,
+    CategoriaForm,
+    EquipamentoForm,
+    MovimentacaoForm,
+    MaterialEdicaoForm,
+    EmprestimoForm,
+)
+
 
 def home(request):
+
     materiais_criticos = Material.objects.filter(
         quantidade__lte=F("estoque_minimo")
-    ) | Material.objects.filter(quantidade=0)
+    )
+
+    emprestimos_atrasados = Emprestimo.objects.filter(
+        data_devolucao__isnull=True,
+        previsao_devolucao__lt=timezone.localdate()
+    ).select_related("equipamento")
 
     return render(
         request,
         "estoque/home.html",
         {
             "materiais_criticos": materiais_criticos,
-            "total_alertas": materiais_criticos.count()
+            "total_alertas": materiais_criticos.count(),
+            "emprestimos_atrasados": emprestimos_atrasados,
+            "total_atrasados": emprestimos_atrasados.count(),
         }
     )
 
+
 def lista_materiais(request):
-    materiais = Material.objects.select_related("categoria").all()
+
+    materiais = Material.objects.select_related(
+        "categoria"
+    ).order_by("nome")
 
     return render(
         request,
@@ -37,20 +64,27 @@ def lista_materiais(request):
 
 @login_required(login_url="/admin/login/")
 def cadastrar_material(request):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
+
         form = MaterialForm(request.POST)
 
         if form.is_valid():
+
             form.save()
+
             messages.success(
                 request,
                 "Material cadastrado com sucesso!"
             )
+
             return redirect("lista_materiais")
+
     else:
+
         form = MaterialForm()
 
     return render(
@@ -60,55 +94,65 @@ def cadastrar_material(request):
     )
 
 
-
 @login_required(login_url="/admin/login/")
 def editar_material(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     material = get_object_or_404(Material, pk=pk)
 
     if request.method == "POST":
-        form = MaterialEdicaoForm(
-            request.POST,
-            instance=material
-        )
 
-        if form.is_valid():
-            with transaction.atomic():
-                material = Material.objects.select_for_update().get(pk=pk)
-                form = MaterialEdicaoForm(
-                    request.POST,
-                    instance=material
+        with transaction.atomic():
+
+            material = get_object_or_404(
+                Material.objects.select_for_update(),
+                pk=pk
+            )
+
+            form = MaterialEdicaoForm(
+                request.POST,
+                instance=material
+            )
+
+            if form.is_valid():
+
+                form.save()
+
+                messages.success(
+                    request,
+                    "Material atualizado com sucesso!"
                 )
 
-                if form.is_valid():
-                    form.save()
-                    messages.success(
-                        request,
-                        "Material atualizado com sucesso!"
-                    )
-                    return redirect("lista_materiais")
+                return redirect("lista_materiais")
+
     else:
+
         form = MaterialEdicaoForm(instance=material)
 
     return render(
         request,
         "estoque/editar_material.html",
-        {"form": form, "material": material}
+        {
+            "form": form,
+            "material": material,
+        }
     )
-
 
 
 @login_required(login_url="/admin/login/")
 def excluir_material(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     material = get_object_or_404(Material, pk=pk)
 
     if request.method == "POST":
+
         try:
+
             material.delete()
 
             messages.success(
@@ -117,37 +161,7 @@ def excluir_material(request, pk):
             )
 
         except ProtectedError:
-            messages.error(
-                request,
-                "Não é possível excluir este material, "
-                "pois ele possui movimentações registradas."
-            )
 
-        return redirect("lista_materiais")
-
-    return render(
-        request,
-        "estoque/excluir_material.html",
-        {"material": material}
-    )
-
-@login_required(login_url="/admin/login/")
-def excluir_material(request, pk):
-    if not request.user.is_staff:
-        raise PermissionDenied
-
-    material = get_object_or_404(Material, pk=pk)
-
-    if request.method == "POST":
-        try:
-            material.delete()
-
-            messages.success(
-                request,
-                "Material excluído com sucesso!"
-            )
-
-        except ProtectedError:
             messages.error(
                 request,
                 "Não é possível excluir este material, "
@@ -165,6 +179,7 @@ def excluir_material(request, pk):
 
 @login_required(login_url="/admin/login/")
 def lista_categorias(request):
+
     categorias = Categoria.objects.all().order_by("nome")
 
     return render(
@@ -176,75 +191,105 @@ def lista_categorias(request):
 
 @login_required(login_url="/admin/login/")
 def cadastrar_categoria(request):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
+
         form = CategoriaForm(request.POST)
 
         if form.is_valid():
+
             form.save()
+
             messages.success(
                 request,
                 "Categoria cadastrada com sucesso!"
             )
+
             return redirect("lista_categorias")
+
     else:
+
         form = CategoriaForm()
 
     return render(
         request,
         "estoque/form_categoria.html",
-        {"form": form, "titulo": "Cadastrar categoria"}
+        {
+            "form": form,
+            "titulo": "Cadastrar categoria",
+        }
     )
 
 
 @login_required(login_url="/admin/login/")
 def editar_categoria(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     categoria = get_object_or_404(Categoria, pk=pk)
 
     if request.method == "POST":
-        form = CategoriaForm(request.POST, instance=categoria)
+
+        form = CategoriaForm(
+            request.POST,
+            instance=categoria
+        )
 
         if form.is_valid():
+
             form.save()
+
             messages.success(
                 request,
                 "Categoria atualizada com sucesso!"
             )
+
             return redirect("lista_categorias")
+
     else:
+
         form = CategoriaForm(instance=categoria)
 
     return render(
         request,
         "estoque/form_categoria.html",
-        {"form": form, "titulo": "Editar categoria"}
+        {
+            "form": form,
+            "titulo": "Editar categoria",
+            "categoria": categoria,
+        }
     )
 
 
 @login_required(login_url="/admin/login/")
 def excluir_categoria(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     categoria = get_object_or_404(Categoria, pk=pk)
 
     if request.method == "POST":
+
         try:
+
             categoria.delete()
+
             messages.success(
                 request,
                 "Categoria excluída com sucesso!"
             )
+
         except ProtectedError:
+
             messages.error(
                 request,
-                "Não é possível excluir esta categoria, pois "
-                "ela possui materiais ou equipamentos vinculados."
+                "Não é possível excluir esta categoria, "
+                "pois existem materiais ou equipamentos vinculados."
             )
 
         return redirect("lista_categorias")
@@ -255,7 +300,9 @@ def excluir_categoria(request, pk):
         {"categoria": categoria}
     )
 
+
 def lista_equipamentos(request):
+
     equipamentos = Equipamento.objects.select_related(
         "categoria"
     ).order_by("nome")
@@ -269,69 +316,120 @@ def lista_equipamentos(request):
 
 @login_required(login_url="/admin/login/")
 def cadastrar_equipamento(request):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
+
         form = EquipamentoForm(request.POST)
 
         if form.is_valid():
-            form.save()
+
+            equipamento = form.save(commit=False)
+            equipamento.status = "disponivel"
+            equipamento.save()
+
             messages.success(
                 request,
                 "Equipamento cadastrado com sucesso!"
             )
+
             return redirect("lista_equipamentos")
+
     else:
+
         form = EquipamentoForm()
 
     return render(
         request,
         "estoque/form_equipamento.html",
-        {"form": form, "titulo": "Cadastrar equipamento"}
+        {
+            "form": form,
+            "titulo": "Cadastrar equipamento",
+        }
     )
 
 
 @login_required(login_url="/admin/login/")
 def editar_equipamento(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     equipamento = get_object_or_404(Equipamento, pk=pk)
 
     if request.method == "POST":
-        form = EquipamentoForm(request.POST, instance=equipamento)
 
-        if form.is_valid():
-            form.save()
-            messages.success(
-                request,
-                "Equipamento atualizado com sucesso!"
+        with transaction.atomic():
+
+            equipamento = get_object_or_404(
+                Equipamento.objects.select_for_update(),
+                pk=pk
             )
-            return redirect("lista_equipamentos")
+
+            status_atual = equipamento.status
+
+            form = EquipamentoForm(
+                request.POST,
+                instance=equipamento
+            )
+
+            if form.is_valid():
+
+                equipamento = form.save(commit=False)
+                equipamento.status = status_atual
+                equipamento.save()
+
+                messages.success(
+                    request,
+                    "Equipamento atualizado com sucesso!"
+                )
+
+                return redirect("lista_equipamentos")
+
     else:
+
         form = EquipamentoForm(instance=equipamento)
 
     return render(
         request,
         "estoque/form_equipamento.html",
-        {"form": form, "titulo": "Editar equipamento"}
+        {
+            "form": form,
+            "titulo": "Editar equipamento",
+            "equipamento": equipamento,
+        }
     )
 
 
 @login_required(login_url="/admin/login/")
 def excluir_equipamento(request, pk):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     equipamento = get_object_or_404(Equipamento, pk=pk)
 
     if request.method == "POST":
-        equipamento.delete()
-        messages.success(
-            request,
-            "Equipamento excluído com sucesso!"
-        )
+
+        try:
+
+            equipamento.delete()
+
+            messages.success(
+                request,
+                "Equipamento excluído com sucesso!"
+            )
+
+        except ProtectedError:
+
+            messages.error(
+                request,
+                "Não é possível excluir este equipamento, "
+                "pois ele possui empréstimos registrados."
+            )
+
         return redirect("lista_equipamentos")
 
     return render(
@@ -340,41 +438,51 @@ def excluir_equipamento(request, pk):
         {"equipamento": equipamento}
     )
 
+
 @login_required(login_url="/admin/login/")
 def registrar_movimentacao(request):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
+
         form = MovimentacaoForm(request.POST)
 
         if form.is_valid():
-            dados = form.cleaned_data
 
             with transaction.atomic():
-                material = Material.objects.select_for_update().get(
-                    pk=dados["material"].pk
+
+                material = get_object_or_404(
+                    Material.objects.select_for_update(),
+                    pk=form.cleaned_data["material"].pk
                 )
 
-                quantidade = dados["quantidade"]
-                tipo = dados["tipo"]
+                tipo = form.cleaned_data["tipo"]
+                quantidade = form.cleaned_data["quantidade"]
 
                 if tipo == "saida" and quantidade > material.quantidade:
+
                     form.add_error(
                         "quantidade",
-                        "Estoque insuficiente para realizar esta saída."
-                    )
-                else:
-                    variacao = (
-                        quantidade if tipo == "entrada"
-                        else -quantidade
+                        "Quantidade insuficiente em estoque."
                     )
 
-                    Material.objects.filter(pk=material.pk).update(
+                else:
+
+                    if tipo == "entrada":
+                        variacao = quantidade
+                    else:
+                        variacao = -quantidade
+
+                    Material.objects.filter(
+                        pk=material.pk
+                    ).update(
                         quantidade=F("quantidade") + variacao
                     )
 
                     movimentacao = form.save(commit=False)
+                    movimentacao.material = material
                     movimentacao.responsavel = request.user
                     movimentacao.save()
 
@@ -384,7 +492,9 @@ def registrar_movimentacao(request):
                     )
 
                     return redirect("lista_materiais")
+
     else:
+
         form = MovimentacaoForm()
 
     return render(
@@ -393,10 +503,13 @@ def registrar_movimentacao(request):
         {"form": form}
     )
 
+
 @login_required(login_url="/admin/login/")
 def lista_movimentacoes(request):
+
     movimentacoes = Movimentacao.objects.select_related(
-        "material", "responsavel"
+        "material",
+        "responsavel"
     ).order_by("-data")
 
     return render(
@@ -405,21 +518,24 @@ def lista_movimentacoes(request):
         {"movimentacoes": movimentacoes}
     )
 
+
 @login_required(login_url="/admin/login/")
 def registrar_emprestimo(request):
+
     if not request.user.is_staff:
         raise PermissionDenied
 
     if request.method == "POST":
+
         form = EmprestimoForm(request.POST)
 
         if form.is_valid():
+
             with transaction.atomic():
 
-                equipamento = (
-                    Equipamento.objects.select_for_update().get(
-                        pk=form.cleaned_data["equipamento"].pk
-                    )
+                equipamento = get_object_or_404(
+                    Equipamento.objects.select_for_update(),
+                    pk=form.cleaned_data["equipamento"].pk
                 )
 
                 emprestimo_ativo = Emprestimo.objects.filter(
@@ -428,11 +544,14 @@ def registrar_emprestimo(request):
                 ).exists()
 
                 if equipamento.status != "disponivel" or emprestimo_ativo:
+
                     form.add_error(
                         "equipamento",
                         "Este equipamento não está disponível."
                     )
+
                 else:
+
                     emprestimo = form.save(commit=False)
                     emprestimo.responsavel = request.user
                     emprestimo.equipamento = equipamento
@@ -447,7 +566,9 @@ def registrar_emprestimo(request):
                     )
 
                     return redirect("lista_equipamentos")
+
     else:
+
         form = EmprestimoForm()
 
     return render(
@@ -456,21 +577,45 @@ def registrar_emprestimo(request):
         {"form": form}
     )
 
+
 @login_required(login_url="/admin/login/")
 def lista_emprestimos(request):
 
-    emprestimos = Emprestimo.objects.filter(
-        data_devolucao__isnull=True
-    ).select_related(
+    filtro = request.GET.get("situacao", "todos")
+
+    emprestimos = Emprestimo.objects.select_related(
         "equipamento",
         "responsavel"
     ).order_by("-data_emprestimo")
 
+    if filtro == "ativos":
+
+        emprestimos = emprestimos.filter(
+            data_devolucao__isnull=True
+        )
+
+    elif filtro == "atrasados":
+
+        emprestimos = emprestimos.filter(
+            data_devolucao__isnull=True,
+            previsao_devolucao__lt=timezone.localdate()
+        )
+
+    elif filtro == "devolvidos":
+
+        emprestimos = emprestimos.filter(
+            data_devolucao__isnull=False
+        )
+
     return render(
         request,
         "estoque/lista_emprestimos.html",
-        {"emprestimos": emprestimos}
+        {
+            "emprestimos": emprestimos,
+            "filtro": filtro,
+        }
     )
+
 
 @login_required(login_url="/admin/login/")
 def registrar_devolucao(request, pk):
@@ -484,15 +629,18 @@ def registrar_devolucao(request, pk):
 
         with transaction.atomic():
 
-            equipamento = Equipamento.objects.select_for_update().get(
+            equipamento = get_object_or_404(
+                Equipamento.objects.select_for_update(),
                 pk=emprestimo.equipamento_id
             )
 
-            emprestimo = Emprestimo.objects.select_for_update().get(
+            emprestimo = get_object_or_404(
+                Emprestimo.objects.select_for_update(),
                 pk=pk
             )
 
             if emprestimo.data_devolucao is not None:
+
                 messages.error(
                     request,
                     "Este equipamento já foi devolvido."
