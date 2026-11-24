@@ -22,13 +22,25 @@
     <p class="text-muted">
         Gerenciamento dos equipamentos do Espaço Maker
     </p>
-
+     
     {% if user.is_staff %}
-    <a href="{% url 'cadastrar_equipamento' %}"
-       class="btn btn-primary mb-3">
-        + Novo equipamento
-    </a>
+
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
+
+        <a href="{% url 'cadastrar_equipamento' %}"
+        class="btn btn-primary">
+            + Novo equipamento
+        </a>
+
+        <a href="{% url 'registrar_emprestimo' %}"
+        class="btn btn-success">
+            + Registrar empréstimo
+        </a>
+
+    </div>
+
     {% endif %}
+
 
     {% for message in messages %}
     <div class="alert alert-{{ message.tags }}">

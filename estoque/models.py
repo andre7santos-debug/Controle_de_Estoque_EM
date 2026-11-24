@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Categoria(models.Model):
@@ -111,4 +112,41 @@ class Movimentacao(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.material.nome}"
+    
+
+class Emprestimo(models.Model):
+
+    equipamento = models.ForeignKey(
+        Equipamento,
+        on_delete=models.PROTECT,
+        related_name="emprestimos"
+    )
+
+    solicitante = models.CharField(max_length=150)
+
+    data_emprestimo = models.DateTimeField(
+        default=timezone.now
+    )
+
+    previsao_devolucao = models.DateField()
+
+    data_devolucao = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    responsavel = models.ForeignKey(
+        "auth.User",
+        on_delete=models.PROTECT
+    )
+
+    observacao = models.TextField(blank=True)
+
+    @property
+    def devolvido(self):
+        return self.data_devolucao is not None
+
+    def __str__(self):
+        return f"{self.equipamento.nome} - {self.solicitante}"
+
 

@@ -77,4 +77,9 @@ urlpatterns = [
     views.lista_movimentacoes,
     name="lista_movimentacoes"
     ),
+    path(
+    "emprestimos/novo/",
+    views.registrar_emprestimo,
+    name="registrar_emprestimo"
+    ),
 ]

@@ -7,8 +7,8 @@ from django.db.models.deletion import ProtectedError
 from django.db import transaction
 from django.db.models import F
 
-from .models import Material, Categoria, Equipamento, Movimentacao
-from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm
+from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo
+from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm, EmprestimoForm
 
 def home(request):
     materiais_criticos = Material.objects.filter(
@@ -402,4 +402,55 @@ def lista_movimentacoes(request):
         request,
         "estoque/lista_movimentacoes.html",
         {"movimentacoes": movimentacoes}
+    )
+
+@login_required(login_url="/admin/login/")
+def registrar_emprestimo(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+        form = EmprestimoForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+
+                equipamento = (
+                    Equipamento.objects.select_for_update().get(
+                        pk=form.cleaned_data["equipamento"].pk
+                    )
+                )
+
+                emprestimo_ativo = Emprestimo.objects.filter(
+                    equipamento=equipamento,
+                    data_devolucao__isnull=True
+                ).exists()
+
+                if equipamento.status != "disponivel" or emprestimo_ativo:
+                    form.add_error(
+                        "equipamento",
+                        "Este equipamento não está disponível."
+                    )
+                else:
+                    emprestimo = form.save(commit=False)
+                    emprestimo.responsavel = request.user
+                    emprestimo.equipamento = equipamento
+                    emprestimo.save()
+
+                    equipamento.status = "emprestado"
+                    equipamento.save(update_fields=["status"])
+
+                    messages.success(
+                        request,
+                        "Empréstimo registrado com sucesso!"
+                    )
+
+                    return redirect("lista_equipamentos")
+    else:
+        form = EmprestimoForm()
+
+    return render(
+        request,
+        "estoque/registrar_emprestimo.html",
+        {"form": form}
     )
