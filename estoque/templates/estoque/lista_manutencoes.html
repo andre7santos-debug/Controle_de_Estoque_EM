@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Histórico de manutenções</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                Controle de Estoque - Espaço Maker
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+
+        <h2 class="mb-4">Histórico de manutenções</h2>
+
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="d-flex flex-wrap gap-2 mb-4">
+
+            {% if user.is_staff %}
+                <a href="{% url 'registrar_manutencao' %}"
+                   class="btn btn-warning">
+                    Registrar manutenção
+                </a>
+            {% endif %}
+
+            <a href="{% url 'lista_equipamentos' %}"
+               class="btn btn-secondary">
+                Voltar
+            </a>
+
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+
+            <a href="?situacao=todos"
+               class="btn {% if filtro == 'todos' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                Todas
+            </a>
+
+            <a href="?situacao=ativas"
+               class="btn {% if filtro == 'ativas' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                Em andamento
+            </a>
+
+            <a href="?situacao=finalizadas"
+               class="btn {% if filtro == 'finalizadas' %}btn-success{% else %}btn-outline-success{% endif %}">
+                Finalizadas
+            </a>
+
+        </div>
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped align-middle">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Equipamento</th>
+                        <th>Motivo</th>
+                        <th>Data de início</th>
+                        <th>Data de finalização</th>
+                        <th>Responsável</th>
+                        <th>Observações</th>
+                        <th>Situação</th>
+
+                        {% if user.is_staff %}
+                            <th>Ações</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for manutencao in manutencoes %}
+
+                        <tr>
+
+                            <td>{{ manutencao.equipamento.nome }}</td>
+
+                            <td>{{ manutencao.motivo }}</td>
+
+                            <td>
+                                {{ manutencao.data_inicio|date:"d/m/Y H:i" }}
+                            </td>
+
+                            <td>
+                                {{ manutencao.data_fim|date:"d/m/Y H:i"|default:"-" }}
+                            </td>
+
+                            <td>{{ manutencao.responsavel.username }}</td>
+
+                            <td>{{ manutencao.observacao|default:"-" }}</td>
+
+                            <td>
+
+                                {% if manutencao.finalizada %}
+
+                                    <span class="badge bg-success">
+                                        Finalizada
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        Em andamento
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            {% if user.is_staff %}
+
+                                <td>
+
+                                    {% if not manutencao.finalizada %}
+
+                                        <a href="{% url 'finalizar_manutencao' manutencao.pk %}"
+                                           class="btn btn-success btn-sm">
+                                            Finalizar
+                                        </a>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Encerrada
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endif %}
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="{% if user.is_staff %}8{% else %}7{% endif %}"
+                                class="text-center">
+                                Nenhuma manutenção encontrada.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

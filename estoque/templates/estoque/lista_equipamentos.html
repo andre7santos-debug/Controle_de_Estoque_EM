@@ -37,12 +37,15 @@
        class="btn btn-success">
         + Registrar empréstimo
     </a>
-   
+    <a href="{% url 'registrar_manutencao' %}"
+        class="btn btn-warning">
+        Registrar manutenção
+    </a>
     {% endif %}
 
-    <a href="{% url 'lista_emprestimos' %}"
-        class="btn btn-outline-primary">
-        Histórico de empréstimos
+    <a href="{% url 'lista_manutencoes' %}"
+        class="btn btn-outline-warning">
+        Histórico de manutenções
     </a>
 
 </div>

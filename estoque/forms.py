@@ -1,6 +1,6 @@
 from django import forms
 from django.utils import timezone
-from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo
+from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo, Manutencao
 
 class MaterialForm(forms.ModelForm):
     class Meta:
@@ -195,3 +195,73 @@ class EmprestimoForm(forms.ModelForm):
                 )
 
         return cleaned_data
+    
+
+class ManutencaoForm(forms.ModelForm):
+
+    class Meta:
+        model = Manutencao
+
+        fields = [
+            "equipamento",
+            "motivo",
+            "data_inicio",
+            "observacao",
+        ]
+
+        widgets = {
+            "equipamento": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "motivo": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+            "data_inicio": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local"
+                }
+            ),
+            "observacao": forms.Textarea(
+                attrs={"class": "form-control", "rows": 3}
+            ),
+        }
+
+        labels = {
+            "equipamento": "Equipamento",
+            "motivo": "Motivo da manutenção",
+            "data_inicio": "Data de início",
+            "observacao": "Observações",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        manutencoes_ativas = Manutencao.objects.filter(
+            data_fim__isnull=True
+        ).values_list("equipamento_id", flat=True)
+
+        emprestimos_ativos = Emprestimo.objects.filter(
+            data_devolucao__isnull=True
+        ).values_list("equipamento_id", flat=True)
+
+        self.fields["equipamento"].queryset = (
+            Equipamento.objects.filter(
+                status="disponivel"
+            ).exclude(
+                pk__in=manutencoes_ativas
+            ).exclude(
+                pk__in=emprestimos_ativos
+            ).order_by("nome")
+        )
+
+    def clean_data_inicio(self):
+        data_inicio = self.cleaned_data["data_inicio"]
+
+        if data_inicio > timezone.now():
+            raise forms.ValidationError(
+                "A data de início não pode estar no futuro."
+            )
+
+        return data_inicio

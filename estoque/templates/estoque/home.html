@@ -80,7 +80,6 @@
 
         {% endif %}
 
-
         {% if user.is_authenticated and total_atrasados > 0 %}
 
             <div class="alert alert-danger">
@@ -114,7 +113,6 @@
 
         {% endif %}
 
-
         <div class="row g-3">
 
             <div class="col-md-6">
@@ -138,7 +136,6 @@
                 </div>
             </div>
 
-
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body">
@@ -159,7 +156,6 @@
                     </div>
                 </div>
             </div>
-
 
             <div class="col-md-6">
                 <div class="card h-100">
@@ -182,7 +178,6 @@
                 </div>
             </div>
 
-
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body">
@@ -204,7 +199,6 @@
                 </div>
             </div>
 
-
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body">
@@ -218,6 +212,27 @@
                         </p>
 
                         <a href="{% url 'lista_emprestimos' %}"
+                           class="btn btn-primary">
+                            Acessar
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+
+                        <i class="bi bi-wrench-adjustable fs-4"></i>
+
+                        <h5 class="mt-2">Manutenções</h5>
+
+                        <p>
+                            Controlar manutenções e consultar o histórico.
+                        </p>
+
+                        <a href="{% url 'lista_manutencoes' %}"
                            class="btn btn-primary">
                             Acessar
                         </a>

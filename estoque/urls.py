@@ -92,4 +92,19 @@ urlpatterns = [
     views.registrar_devolucao,
     name="registrar_devolucao"
 ),
+    path(
+    "manutencoes/nova/",
+    views.registrar_manutencao,
+    name="registrar_manutencao"
+),
+    path(
+    "manutencoes/",
+    views.lista_manutencoes,
+    name="lista_manutencoes"
+),
+    path(
+    "manutencoes/<int:pk>/finalizar/",
+    views.finalizar_manutencao,
+    name="finalizar_manutencao"
+),
 ]

@@ -158,4 +158,44 @@ class Emprestimo(models.Model):
 
         return "emprestado"
 
+class Manutencao(models.Model):
 
+    equipamento = models.ForeignKey(
+        Equipamento,
+        on_delete=models.PROTECT,
+        related_name="manutencoes"
+    )
+
+    motivo = models.TextField()
+
+    data_inicio = models.DateTimeField(
+        default=timezone.now
+    )
+
+    data_fim = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    responsavel = models.ForeignKey(
+        "auth.User",
+        on_delete=models.PROTECT
+    )
+
+    observacao = models.TextField(
+        blank=True
+    )
+
+    @property
+    def finalizada(self):
+        return self.data_fim is not None
+
+    @property
+    def situacao(self):
+        if self.data_fim is not None:
+            return "finalizada"
+
+        return "em_andamento"
+
+    def __str__(self):
+        return f"Manutenção - {self.equipamento.nome}"

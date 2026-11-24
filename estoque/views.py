@@ -14,6 +14,7 @@ from .models import (
     Equipamento,
     Movimentacao,
     Emprestimo,
+    Manutencao,
 )
 
 from .forms import (
@@ -23,8 +24,8 @@ from .forms import (
     MovimentacaoForm,
     MaterialEdicaoForm,
     EmprestimoForm,
+    ManutencaoForm,
 )
-
 
 def home(request):
 
@@ -665,4 +666,169 @@ def registrar_devolucao(request, pk):
         request,
         "estoque/registrar_devolucao.html",
         {"emprestimo": emprestimo}
+    )
+
+@login_required(login_url="/admin/login/")
+def registrar_manutencao(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+
+        form = ManutencaoForm(request.POST)
+
+        if form.is_valid():
+
+            with transaction.atomic():
+
+                equipamento = get_object_or_404(
+                    Equipamento.objects.select_for_update(),
+                    pk=form.cleaned_data["equipamento"].pk
+                )
+
+                manutencao_ativa = Manutencao.objects.filter(
+                    equipamento=equipamento,
+                    data_fim__isnull=True
+                ).exists()
+
+                emprestimo_ativo = Emprestimo.objects.filter(
+                    equipamento=equipamento,
+                    data_devolucao__isnull=True
+                ).exists()
+
+                if (
+                    equipamento.status != "disponivel"
+                    or manutencao_ativa
+                    or emprestimo_ativo
+                ):
+
+                    form.add_error(
+                        "equipamento",
+                        "Este equipamento não está disponível."
+                    )
+
+                else:
+
+                    manutencao = form.save(commit=False)
+                    manutencao.equipamento = equipamento
+                    manutencao.responsavel = request.user
+                    manutencao.save()
+
+                    equipamento.status = "manutencao"
+                    equipamento.save(update_fields=["status"])
+
+                    messages.success(
+                        request,
+                        "Manutenção registrada com sucesso!"
+                    )
+
+                    return redirect("lista_equipamentos")
+
+    else:
+
+        form = ManutencaoForm()
+
+    return render(
+        request,
+        "estoque/registrar_manutencao.html",
+        {"form": form}
+    )
+
+@login_required(login_url="/admin/login/")
+def lista_manutencoes(request):
+
+    filtro = request.GET.get("situacao", "todos")
+
+    manutencoes = Manutencao.objects.select_related(
+        "equipamento",
+        "responsavel"
+    ).order_by("-data_inicio")
+
+    if filtro == "ativas":
+
+        manutencoes = manutencoes.filter(
+            data_fim__isnull=True
+        )
+
+    elif filtro == "finalizadas":
+
+        manutencoes = manutencoes.filter(
+            data_fim__isnull=False
+        )
+
+    else:
+
+        filtro = "todos"
+
+    return render(
+        request,
+        "estoque/lista_manutencoes.html",
+        {
+            "manutencoes": manutencoes,
+            "filtro": filtro,
+        }
+    )
+
+
+@login_required(login_url="/admin/login/")
+def finalizar_manutencao(request, pk):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    manutencao = get_object_or_404(Manutencao, pk=pk)
+
+    if request.method == "POST":
+
+        with transaction.atomic():
+
+            equipamento = get_object_or_404(
+                Equipamento.objects.select_for_update(),
+                pk=manutencao.equipamento_id
+            )
+
+            manutencao = get_object_or_404(
+                Manutencao.objects.select_for_update(),
+                pk=pk
+            )
+
+            if manutencao.data_fim is not None:
+
+                messages.error(
+                    request,
+                    "Esta manutenção já foi finalizada."
+                )
+
+                return redirect("lista_manutencoes")
+
+            if equipamento.status != "manutencao" or Emprestimo.objects.filter(
+                equipamento=equipamento,
+                data_devolucao__isnull=True
+            ).exists():
+
+                messages.error(
+                    request,
+                    "O equipamento possui uma situação incompatível."
+                )
+
+                return redirect("lista_manutencoes")
+
+            manutencao.data_fim = timezone.now()
+            manutencao.save(update_fields=["data_fim"])
+
+            equipamento.status = "disponivel"
+            equipamento.save(update_fields=["status"])
+
+            messages.success(
+                request,
+                "Manutenção finalizada com sucesso!"
+            )
+
+        return redirect("lista_manutencoes")
+
+    return render(
+        request,
+        "estoque/finalizar_manutencao.html",
+        {"manutencao": manutencao}
     )
