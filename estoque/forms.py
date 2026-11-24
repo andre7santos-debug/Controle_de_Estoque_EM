@@ -1,6 +1,8 @@
 from django import forms
 from django.utils import timezone
 from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo, Manutencao
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 
 class MaterialForm(forms.ModelForm):
     class Meta:
@@ -265,3 +267,176 @@ class ManutencaoForm(forms.ModelForm):
             )
 
         return data_inicio
+
+class UsuarioCadastroForm(UserCreationForm):
+
+    NIVEL_CHOICES = [
+        ("comum", "Usuário comum"),
+        ("administrador", "Administrador"),
+    ]
+
+    nivel_acesso = forms.ChoiceField(
+        choices=NIVEL_CHOICES,
+        label="Nível de acesso",
+        widget=forms.Select(
+            attrs={"class": "form-select"}
+        )
+    )
+
+    class Meta:
+        model = User
+
+        fields = [
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "password1",
+            "password2",
+            "nivel_acesso",
+        ]
+
+        labels = {
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "username": "Nome de usuário",
+            "email": "E-mail",
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
+        self.fields["email"].required = True
+
+        self.fields["password1"].label = "Senha"
+        self.fields["password2"].label = "Confirmar senha"
+
+        for campo in self.fields.values():
+
+            if isinstance(campo.widget, forms.Select):
+                campo.widget.attrs["class"] = "form-select"
+            else:
+                campo.widget.attrs["class"] = "form-control"
+
+    def clean_email(self):
+
+        email = self.cleaned_data["email"].strip().lower()
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "Este e-mail já está cadastrado."
+            )
+
+        return email
+
+    def save(self, commit=True):
+
+        usuario = super().save(commit=False)
+
+        usuario.is_staff = (
+            self.cleaned_data["nivel_acesso"] == "administrador"
+        )
+
+        usuario.is_superuser = False
+        usuario.is_active = True
+
+        if commit:
+            usuario.save()
+
+        return usuario
+
+class UsuarioEdicaoForm(forms.ModelForm):
+
+    NIVEL_CHOICES = [
+        ("comum", "Usuário comum"),
+        ("administrador", "Administrador"),
+    ]
+
+    nivel_acesso = forms.ChoiceField(
+        choices=NIVEL_CHOICES,
+        label="Nível de acesso",
+        widget=forms.Select(
+            attrs={"class": "form-select"}
+        )
+    )
+
+    class Meta:
+        model = User
+
+        fields = [
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "nivel_acesso",
+        ]
+
+        labels = {
+            "first_name": "Nome",
+            "last_name": "Sobrenome",
+            "username": "Nome de usuário",
+            "email": "E-mail",
+        }
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
+        self.fields["email"].required = True
+
+        self.fields["nivel_acesso"].initial = (
+            "administrador"
+            if self.instance.is_staff
+            else "comum"
+        )
+
+        for campo in self.fields.values():
+
+            if isinstance(campo.widget, forms.Select):
+                campo.widget.attrs["class"] = "form-select"
+            else:
+                campo.widget.attrs["class"] = "form-control"
+
+    def clean_email(self):
+
+        email = self.cleaned_data["email"].strip().lower()
+
+        if User.objects.filter(
+            email__iexact=email
+        ).exclude(pk=self.instance.pk).exists():
+
+            raise forms.ValidationError(
+                "Este e-mail já está cadastrado."
+            )
+
+        return email
+
+    def save(self, commit=True):
+
+        usuario = super().save(commit=False)
+
+        usuario.is_staff = (
+            self.cleaned_data["nivel_acesso"] == "administrador"
+        )
+
+        if commit:
+            usuario.save()
+
+        return usuario
+
+class UsuarioSenhaForm(SetPasswordForm):
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["new_password1"].label = "Nova senha"
+        self.fields["new_password2"].label = "Confirmar nova senha"
+
+        for campo in self.fields.values():
+            campo.widget.attrs["class"] = "form-control"

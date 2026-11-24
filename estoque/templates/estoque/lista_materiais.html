@@ -1,12 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Materiais - Estoque Maker</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet">
 </head>
+
 <body class="bg-light">
 
     <nav class="navbar navbar-dark bg-primary">
@@ -18,39 +21,62 @@
     </nav>
 
     <main class="container mt-5">
-        <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
 
-            {% if user.is_staff %}
+        {% if user.is_staff %}
 
-            <a href="{% url 'cadastrar_material' %}"
-            class="btn btn-primary">
-                + Novo material
-            </a>
+            <h2>Gerenciamento de materiais</h2>
 
-            <a href="{% url 'registrar_movimentacao' %}"
-            class="btn btn-success">
-                + Registrar movimentação
-            </a>
+            <p class="text-muted">
+                Consulte e gerencie os materiais do estoque.
+            </p>
 
-            {% endif %}
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-4">
 
-            <a href="{% url 'lista_movimentacoes' %}"
-            class="btn btn-outline-primary">
-                Ver histórico
-            </a>
-        </div>
+                <a href="{% url 'cadastrar_material' %}"
+                   class="btn btn-primary">
+                    + Novo material
+                </a>
 
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">
+                <a href="{% url 'registrar_movimentacao' %}"
+                   class="btn btn-success">
+                    + Registrar movimentação
+                </a>
+
+                <a href="{% url 'lista_movimentacoes' %}"
+                   class="btn btn-outline-primary">
+                    Ver histórico
+                </a>
+
+            </div>
+
+        {% else %}
+
+            <h2>Consulta de materiais</h2>
+
+            <p class="text-muted">
+                Consulte os materiais e as quantidades disponíveis no estoque.
+            </p>
+
+        {% endif %}
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags|default:'info' }}{% endif %}">
                     {{ message }}
                 </div>
-                {% endfor %}
-            {% endif %}
+
+            {% endfor %}
+
+        {% endif %}
 
         <div class="table-responsive">
-            <table class="table table-striped table-bordered mt-4">
+
+            <table class="table table-striped table-bordered align-middle mt-4">
+
                 <thead class="table-dark">
+
                     <tr>
                         <th>Nome</th>
                         <th>Categoria</th>
@@ -58,69 +84,106 @@
                         <th>Unidade</th>
                         <th>Estoque mínimo</th>
                         <th>Situação</th>
-                        <th>Ações</th>
+
+                        {% if user.is_staff %}
+
+                            <th>Ações</th>
+
+                        {% endif %}
+
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     {% for material in materiais %}
-                    <tr>
-                        <td>{{ material.nome }}</td>
-                        <td>{{ material.categoria.nome }}</td>
-                        <td>{{ material.quantidade }}</td>
-                        <td>{{ material.unidade_medida }}</td>
-                        <td>{{ material.estoque_minimo }}</td>
-                        <td>
-                            {% if material.situacao_estoque == "esgotado" %}
-                                <span class="badge bg-danger">
-                                    Esgotado
-                                </span>
 
-                            {% elif material.situacao_estoque == "baixo" %}
-                                <span class="badge bg-warning text-dark">
-                                    Estoque baixo
-                                </span>
+                        <tr>
 
-                            {% else %}
-                                <span class="badge bg-success">
-                                    Normal
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td>
+                            <td>{{ material.nome }}</td>
+
+                            <td>{{ material.categoria.nome }}</td>
+
+                            <td>{{ material.quantidade }}</td>
+
+                            <td>{{ material.unidade_medida }}</td>
+
+                            <td>{{ material.estoque_minimo }}</td>
+
+                            <td>
+
+                                {% if material.situacao_estoque == "esgotado" %}
+
+                                    <span class="badge bg-danger">
+                                        Esgotado
+                                    </span>
+
+                                {% elif material.situacao_estoque == "baixo" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        Estoque baixo
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-success">
+                                        Normal
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
                             {% if user.is_staff %}
-                                <a href="{% url 'editar_material' material.pk %}"
-                                class="btn btn-warning btn-sm">
-                                    Editar
-                                </a>
 
-                                <a href="{% url 'excluir_material' material.pk %}"
-                                class="btn btn-danger btn-sm">
-                                    Excluir
-                                </a>
-                                <a href="{% url 'lista_movimentacoes' %}"
-                                class="btn btn-outline-primary mb-3">
-                                     Ver histórico
-                                </a>
-                            {% else %}
-                                -
+                                <td>
+
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <a href="{% url 'editar_material' material.pk %}"
+                                           class="btn btn-warning btn-sm">
+                                            Editar
+                                        </a>
+
+                                        <a href="{% url 'excluir_material' material.pk %}"
+                                           class="btn btn-danger btn-sm">
+                                            Excluir
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
                             {% endif %}
-                        </td>
 
-                    </tr>
+                        </tr>
+
                     {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center">
-                            Nenhum material cadastrado.
-                        </td>
-                    </tr>
+
+                        <tr>
+
+                            <td colspan="{% if user.is_staff %}7{% else %}6{% endif %}"
+                                class="text-center">
+
+                                Nenhum material cadastrado.
+
+                            </td>
+
+                        </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
-        
+
         <a href="{% url 'home' %}" class="btn btn-secondary">
             Voltar ao painel
         </a>
+
     </main>
 
 </body>

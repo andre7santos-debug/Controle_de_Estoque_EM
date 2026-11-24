@@ -107,4 +107,33 @@ urlpatterns = [
     views.finalizar_manutencao,
     name="finalizar_manutencao"
 ),
+    path("login/", 
+        views.login_usuario, 
+        name="login"
+),
+    path("logout/", 
+        views.logout_usuario, 
+        name="logout"
+),
+    path("usuarios/", 
+        views.lista_usuarios, 
+        name="lista_usuarios"
+),
+
+    path("usuarios/novo/", 
+        views.cadastrar_usuario, 
+        name="cadastrar_usuario"
+),
+    path("usuarios/<int:pk>/editar/", 
+        views.editar_usuario, 
+        name="editar_usuario"
+),
+    path("usuarios/<int:pk>/senha/", 
+        views.alterar_senha_usuario, 
+        name="alterar_senha_usuario"
+),
+    path("usuarios/<int:pk>/situacao/", 
+        views.alterar_situacao_usuario, 
+        name="alterar_situacao_usuario"
+),
 ]

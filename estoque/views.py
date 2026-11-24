@@ -7,6 +7,10 @@ from django.db.models.deletion import ProtectedError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.contrib.auth import authenticate, login, logout
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
 
 from .models import (
     Material,
@@ -25,8 +29,12 @@ from .forms import (
     MaterialEdicaoForm,
     EmprestimoForm,
     ManutencaoForm,
+    UsuarioCadastroForm,
+    UsuarioEdicaoForm,
+    UsuarioSenhaForm,
 )
 
+@login_required
 def home(request):
 
     materiais_criticos = Material.objects.filter(
@@ -37,6 +45,9 @@ def home(request):
         data_devolucao__isnull=True,
         previsao_devolucao__lt=timezone.localdate()
     ).select_related("equipamento")
+
+    if not request.user.is_staff:
+        emprestimos_atrasados = Emprestimo.objects.none()
 
     return render(
         request,
@@ -50,6 +61,7 @@ def home(request):
     )
 
 
+@login_required
 def lista_materiais(request):
 
     materiais = Material.objects.select_related(
@@ -63,7 +75,7 @@ def lista_materiais(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def cadastrar_material(request):
 
     if not request.user.is_staff:
@@ -95,7 +107,7 @@ def cadastrar_material(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def editar_material(request, pk):
 
     if not request.user.is_staff:
@@ -142,7 +154,7 @@ def editar_material(request, pk):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def excluir_material(request, pk):
 
     if not request.user.is_staff:
@@ -178,7 +190,7 @@ def excluir_material(request, pk):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def lista_categorias(request):
 
     categorias = Categoria.objects.all().order_by("nome")
@@ -190,7 +202,7 @@ def lista_categorias(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def cadastrar_categoria(request):
 
     if not request.user.is_staff:
@@ -225,7 +237,7 @@ def cadastrar_categoria(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def editar_categoria(request, pk):
 
     if not request.user.is_staff:
@@ -266,7 +278,7 @@ def editar_categoria(request, pk):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def excluir_categoria(request, pk):
 
     if not request.user.is_staff:
@@ -302,6 +314,7 @@ def excluir_categoria(request, pk):
     )
 
 
+@login_required
 def lista_equipamentos(request):
 
     equipamentos = Equipamento.objects.select_related(
@@ -315,7 +328,7 @@ def lista_equipamentos(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def cadastrar_equipamento(request):
 
     if not request.user.is_staff:
@@ -352,7 +365,7 @@ def cadastrar_equipamento(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def editar_equipamento(request, pk):
 
     if not request.user.is_staff:
@@ -404,7 +417,7 @@ def editar_equipamento(request, pk):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def excluir_equipamento(request, pk):
 
     if not request.user.is_staff:
@@ -440,7 +453,7 @@ def excluir_equipamento(request, pk):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def registrar_movimentacao(request):
 
     if not request.user.is_staff:
@@ -505,8 +518,11 @@ def registrar_movimentacao(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def lista_movimentacoes(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
 
     movimentacoes = Movimentacao.objects.select_related(
         "material",
@@ -520,7 +536,7 @@ def lista_movimentacoes(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def registrar_emprestimo(request):
 
     if not request.user.is_staff:
@@ -579,8 +595,11 @@ def registrar_emprestimo(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def lista_emprestimos(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
 
     filtro = request.GET.get("situacao", "todos")
 
@@ -618,7 +637,7 @@ def lista_emprestimos(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def registrar_devolucao(request, pk):
 
     if not request.user.is_staff:
@@ -668,7 +687,7 @@ def registrar_devolucao(request, pk):
         {"emprestimo": emprestimo}
     )
 
-@login_required(login_url="/admin/login/")
+@login_required
 def registrar_manutencao(request):
 
     if not request.user.is_staff:
@@ -735,8 +754,11 @@ def registrar_manutencao(request):
         {"form": form}
     )
 
-@login_required(login_url="/admin/login/")
+@login_required
 def lista_manutencoes(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
 
     filtro = request.GET.get("situacao", "todos")
 
@@ -771,7 +793,7 @@ def lista_manutencoes(request):
     )
 
 
-@login_required(login_url="/admin/login/")
+@login_required
 def finalizar_manutencao(request, pk):
 
     if not request.user.is_staff:
@@ -831,4 +853,273 @@ def finalizar_manutencao(request, pk):
         request,
         "estoque/finalizar_manutencao.html",
         {"manutencao": manutencao}
+    )
+
+def login_usuario(request):
+
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    proxima_pagina = request.POST.get(
+        "next",
+        request.GET.get("next", "")
+    )
+
+    if request.method == "POST":
+
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        usuario = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if usuario is not None:
+
+            login(request, usuario)
+
+            if url_has_allowed_host_and_scheme(
+                url=proxima_pagina,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure()
+            ):
+                return redirect(proxima_pagina)
+
+            return redirect("home")
+
+        messages.error(
+            request,
+            "Usuário ou senha incorretos."
+        )
+
+    return render(
+        request,
+        "estoque/login.html",
+        {"next": proxima_pagina}
+    )
+
+
+@login_required(login_url="login")
+def logout_usuario(request):
+
+    if request.method == "POST":
+
+        logout(request)
+
+        messages.success(
+            request,
+            "Você saiu do sistema com sucesso."
+        )
+
+        return redirect("login")
+
+    return redirect("home")
+@login_required
+def lista_usuarios(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    usuarios = User.objects.all().order_by("username")
+
+    return render(
+        request,
+        "estoque/lista_usuarios.html",
+        {"usuarios": usuarios}
+    )
+
+
+@login_required
+def cadastrar_usuario(request):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    if request.method == "POST":
+
+        form = UsuarioCadastroForm(request.POST)
+
+        if form.is_valid():
+
+            form.save()
+
+            messages.success(
+                request,
+                "Usuário cadastrado com sucesso."
+            )
+
+            return redirect("lista_usuarios")
+
+    else:
+
+        form = UsuarioCadastroForm()
+
+    return render(
+        request,
+        "estoque/cadastrar_usuario.html",
+        {"form": form}
+    )
+
+@login_required
+def editar_usuario(request, pk):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    usuario = get_object_or_404(User, pk=pk)
+
+    if usuario.is_superuser:
+
+        messages.error(
+            request,
+            "A conta do superusuário não pode ser editada por esta página."
+        )
+
+        return redirect("lista_usuarios")
+
+    if request.method == "POST":
+
+        form = UsuarioEdicaoForm(
+            request.POST,
+            instance=usuario
+        )
+
+        if form.is_valid():
+
+            if (
+                usuario.pk == request.user.pk
+                and form.cleaned_data["nivel_acesso"] == "comum"
+            ):
+
+                form.add_error(
+                    "nivel_acesso",
+                    "Você não pode remover sua própria permissão administrativa."
+                )
+
+            else:
+
+                form.save()
+
+                messages.success(
+                    request,
+                    "Usuário atualizado com sucesso."
+                )
+
+                return redirect("lista_usuarios")
+
+    else:
+
+        form = UsuarioEdicaoForm(instance=usuario)
+
+    return render(
+        request,
+        "estoque/editar_usuario.html",
+        {
+            "form": form,
+            "usuario": usuario
+        }
+    )
+
+@login_required
+def alterar_senha_usuario(request, pk):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    usuario = get_object_or_404(User, pk=pk)
+
+    if usuario.is_superuser:
+
+        messages.error(
+            request,
+            "A senha do superusuário não pode ser alterada por esta página."
+        )
+
+        return redirect("lista_usuarios")
+
+    if request.method == "POST":
+
+        form = UsuarioSenhaForm(usuario, request.POST)
+
+        if form.is_valid():
+
+            form.save()
+
+            if usuario.pk == request.user.pk:
+                update_session_auth_hash(request, usuario)
+
+            messages.success(
+                request,
+                "Senha alterada com sucesso."
+            )
+
+            return redirect("lista_usuarios")
+
+    else:
+
+        form = UsuarioSenhaForm(usuario)
+
+    return render(
+        request,
+        "estoque/alterar_senha_usuario.html",
+        {
+            "form": form,
+            "usuario": usuario
+        }
+    )
+
+@login_required
+def alterar_situacao_usuario(request, pk):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    usuario = get_object_or_404(User, pk=pk)
+
+    if usuario.is_superuser:
+
+        messages.error(
+            request,
+            "A conta do superusuário é protegida."
+        )
+
+        return redirect("lista_usuarios")
+
+    if usuario.pk == request.user.pk:
+
+        messages.error(
+            request,
+            "Você não pode desativar sua própria conta."
+        )
+
+        return redirect("lista_usuarios")
+
+    if request.method == "POST":
+
+        usuario.is_active = not usuario.is_active
+
+        usuario.save(update_fields=["is_active"])
+
+        if usuario.is_active:
+
+            messages.success(
+                request,
+                "Usuário ativado com sucesso."
+            )
+
+        else:
+
+            messages.success(
+                request,
+                "Usuário desativado com sucesso."
+            )
+
+        return redirect("lista_usuarios")
+
+    return render(
+        request,
+        "estoque/alterar_situacao_usuario.html",
+        {"usuario": usuario}
     )
