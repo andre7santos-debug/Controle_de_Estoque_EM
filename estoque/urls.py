@@ -82,4 +82,14 @@ urlpatterns = [
     views.registrar_emprestimo,
     name="registrar_emprestimo"
     ),
+    path(
+    "emprestimos/",
+    views.lista_emprestimos,
+    name="lista_emprestimos"
+),
+    path(
+    "emprestimos/<int:pk>/devolver/",
+    views.registrar_devolucao,
+    name="registrar_devolucao"
+),
 ]

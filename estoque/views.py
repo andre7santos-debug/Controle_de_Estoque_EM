@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models.deletion import ProtectedError
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 
 from .models import Material, Categoria, Equipamento, Movimentacao, Emprestimo
 from .forms import MaterialForm, CategoriaForm, EquipamentoForm, MovimentacaoForm, MaterialEdicaoForm, EmprestimoForm
@@ -453,4 +454,67 @@ def registrar_emprestimo(request):
         request,
         "estoque/registrar_emprestimo.html",
         {"form": form}
+    )
+
+@login_required(login_url="/admin/login/")
+def lista_emprestimos(request):
+
+    emprestimos = Emprestimo.objects.filter(
+        data_devolucao__isnull=True
+    ).select_related(
+        "equipamento",
+        "responsavel"
+    ).order_by("-data_emprestimo")
+
+    return render(
+        request,
+        "estoque/lista_emprestimos.html",
+        {"emprestimos": emprestimos}
+    )
+
+@login_required(login_url="/admin/login/")
+def registrar_devolucao(request, pk):
+
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    emprestimo = get_object_or_404(Emprestimo, pk=pk)
+
+    if request.method == "POST":
+
+        with transaction.atomic():
+
+            equipamento = Equipamento.objects.select_for_update().get(
+                pk=emprestimo.equipamento_id
+            )
+
+            emprestimo = Emprestimo.objects.select_for_update().get(
+                pk=pk
+            )
+
+            if emprestimo.data_devolucao is not None:
+                messages.error(
+                    request,
+                    "Este equipamento já foi devolvido."
+                )
+
+                return redirect("lista_emprestimos")
+
+            emprestimo.data_devolucao = timezone.now()
+            emprestimo.save(update_fields=["data_devolucao"])
+
+            equipamento.status = "disponivel"
+            equipamento.save(update_fields=["status"])
+
+            messages.success(
+                request,
+                "Devolução registrada com sucesso!"
+            )
+
+        return redirect("lista_emprestimos")
+
+    return render(
+        request,
+        "estoque/registrar_devolucao.html",
+        {"emprestimo": emprestimo}
     )
