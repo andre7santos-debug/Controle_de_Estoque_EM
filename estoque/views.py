@@ -11,6 +11,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
+from datetime import date
+from .relatorios import TIPOS_RELATORIO, gerar_dados_relatorio
 
 from .models import (
     Material,
@@ -1122,4 +1124,65 @@ def alterar_situacao_usuario(request, pk):
         request,
         "estoque/alterar_situacao_usuario.html",
         {"usuario": usuario}
+    )
+@login_required
+def relatorios(request):
+    if not request.user.is_staff:
+        raise PermissionDenied
+
+    tipo = request.GET.get("tipo", "estoque")
+    data_inicio = request.GET.get("data_inicio", "")
+    data_fim = request.GET.get("data_fim", "")
+    situacao = request.GET.get("situacao", "todos")
+
+    dados = None
+    erro = None
+
+    situacoes_permitidas = {
+        "estoque": ["todos"],
+        "estoque_critico": ["todos"],
+        "movimentacoes": ["todos", "entrada", "saida"],
+        "emprestimos": ["todos", "ativos", "atrasados", "devolvidos"],
+        "manutencoes": ["todos", "ativas", "finalizadas"],
+    }
+
+    if tipo not in TIPOS_RELATORIO:
+        tipo = "estoque"
+
+    if situacao not in situacoes_permitidas[tipo]:
+        situacao = "todos"
+
+    if tipo in ["estoque", "estoque_critico"]:
+        data_inicio = ""
+        data_fim = ""
+
+    try:
+        inicio = date.fromisoformat(data_inicio) if data_inicio else None
+        fim = date.fromisoformat(data_fim) if data_fim else None
+
+        if inicio and fim and inicio > fim:
+            erro = "A data inicial não pode ser maior que a data final."
+        else:
+            dados = gerar_dados_relatorio(
+                tipo,
+                inicio,
+                fim,
+                situacao
+            )
+
+    except ValueError:
+        erro = "Informe datas válidas."
+
+    return render(
+        request,
+        "estoque/relatorios.html",
+        {
+            "tipos_relatorio": TIPOS_RELATORIO,
+            "tipo": tipo,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+            "situacao": situacao,
+            "dados": dados,
+            "erro": erro,
+        }
     )

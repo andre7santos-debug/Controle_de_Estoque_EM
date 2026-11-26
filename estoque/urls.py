@@ -136,4 +136,8 @@ urlpatterns = [
         views.alterar_situacao_usuario, 
         name="alterar_situacao_usuario"
 ),
+    path("relatorios/", 
+        views.relatorios, 
+        name="relatorios"
+),
 ]
