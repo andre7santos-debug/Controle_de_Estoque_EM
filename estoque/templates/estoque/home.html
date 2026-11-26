@@ -12,13 +12,14 @@
 <body class="bg-light">
 
     <nav class="navbar navbar-dark bg-primary">
-        <div class="container">
 
-            <a class="navbar-brand" href="{% url 'home' %}">
+        <div class="container gap-2">
+
+            <a class="navbar-brand text-wrap" href="{% url 'home' %}">
                 Controle de Estoque - Espaço Maker
             </a>
 
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
 
                 <span class="text-white">
                     <i class="bi bi-person-circle"></i>
@@ -26,13 +27,17 @@
                 </span>
 
                 {% if user.is_staff %}
+
                     <span class="badge bg-light text-primary">
                         Administrador
                     </span>
+
                 {% else %}
+
                     <span class="badge bg-light text-primary">
                         Usuário comum
                     </span>
+
                 {% endif %}
 
                 <form method="POST" action="{% url 'logout' %}" class="mb-0">
@@ -49,9 +54,10 @@
             </div>
 
         </div>
+
     </nav>
 
-    <div class="container mt-4 mb-5">
+    <main class="container mt-4 mb-5">
 
         {% if user.is_staff %}
 
@@ -100,7 +106,7 @@
 
                     {% for material in materiais_criticos %}
 
-                        <li>
+                        <li class="mb-1">
 
                             <strong>{{ material.nome }}</strong> —
                             {{ material.quantidade }} {{ material.unidade_medida }}
@@ -127,7 +133,8 @@
 
                 </ul>
 
-                <a href="{% url 'lista_materiais' %}" class="btn btn-warning btn-sm">
+                <a href="{% url 'lista_materiais' %}"
+                   class="btn btn-warning btn-sm">
                     Consultar materiais
                 </a>
 
@@ -154,7 +161,7 @@
 
                         {% for emprestimo in emprestimos_atrasados %}
 
-                            <li>
+                            <li class="mb-1">
 
                                 <strong>{{ emprestimo.equipamento.nome }}</strong> —
                                 {{ emprestimo.solicitante }}
@@ -179,13 +186,13 @@
 
         {% endif %}
 
-        <div class="row mt-4">
+        <div class="row g-4 mt-0">
 
-            <div class="col-md-6 mb-4">
+            <div class="col-md-6">
 
                 <div class="card shadow-sm h-100">
 
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
 
                         <h5 class="card-title">
                             <i class="bi bi-box-seam"></i>
@@ -206,9 +213,14 @@
 
                         {% endif %}
 
-                        <a href="{% url 'lista_materiais' %}" class="btn btn-primary">
-                            Acessar
-                        </a>
+                        <div class="mt-auto">
+
+                            <a href="{% url 'lista_materiais' %}"
+                               class="btn btn-primary">
+                                Acessar
+                            </a>
+
+                        </div>
 
                     </div>
 
@@ -216,11 +228,11 @@
 
             </div>
 
-            <div class="col-md-6 mb-4">
+            <div class="col-md-6">
 
                 <div class="card shadow-sm h-100">
 
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
 
                         <h5 class="card-title">
                             <i class="bi bi-folder"></i>
@@ -241,9 +253,14 @@
 
                         {% endif %}
 
-                        <a href="{% url 'lista_categorias' %}" class="btn btn-primary">
-                            Acessar
-                        </a>
+                        <div class="mt-auto">
+
+                            <a href="{% url 'lista_categorias' %}"
+                               class="btn btn-primary">
+                                Acessar
+                            </a>
+
+                        </div>
 
                     </div>
 
@@ -251,11 +268,11 @@
 
             </div>
 
-            <div class="col-md-6 mb-4">
+            <div class="col-md-6">
 
                 <div class="card shadow-sm h-100">
 
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
 
                         <h5 class="card-title">
                             <i class="bi bi-tools"></i>
@@ -276,9 +293,14 @@
 
                         {% endif %}
 
-                        <a href="{% url 'lista_equipamentos' %}" class="btn btn-primary">
-                            Acessar
-                        </a>
+                        <div class="mt-auto">
+
+                            <a href="{% url 'lista_equipamentos' %}"
+                               class="btn btn-primary">
+                                Acessar
+                            </a>
+
+                        </div>
 
                     </div>
 
@@ -288,11 +310,11 @@
 
             {% if user.is_staff %}
 
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
 
                     <div class="card shadow-sm h-100">
 
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
 
                             <h5 class="card-title">
                                 <i class="bi bi-arrow-left-right"></i>
@@ -303,9 +325,14 @@
                                 Consulte o histórico de entradas e saídas de materiais.
                             </p>
 
-                            <a href="{% url 'lista_movimentacoes' %}" class="btn btn-primary">
-                                Acessar
-                            </a>
+                            <div class="mt-auto">
+
+                                <a href="{% url 'lista_movimentacoes' %}"
+                                   class="btn btn-primary">
+                                    Acessar
+                                </a>
+
+                            </div>
 
                         </div>
 
@@ -313,11 +340,11 @@
 
                 </div>
 
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
 
                     <div class="card shadow-sm h-100">
 
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
 
                             <h5 class="card-title">
                                 <i class="bi bi-calendar-check"></i>
@@ -328,9 +355,14 @@
                                 Controle os empréstimos e devoluções de equipamentos.
                             </p>
 
-                            <a href="{% url 'lista_emprestimos' %}" class="btn btn-primary">
-                                Acessar
-                            </a>
+                            <div class="mt-auto">
+
+                                <a href="{% url 'lista_emprestimos' %}"
+                                   class="btn btn-primary">
+                                    Acessar
+                                </a>
+
+                            </div>
 
                         </div>
 
@@ -338,11 +370,11 @@
 
                 </div>
 
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
 
                     <div class="card shadow-sm h-100">
 
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
 
                             <h5 class="card-title">
                                 <i class="bi bi-wrench-adjustable"></i>
@@ -353,9 +385,14 @@
                                 Controle as manutenções dos equipamentos e consulte o histórico.
                             </p>
 
-                            <a href="{% url 'lista_manutencoes' %}" class="btn btn-primary">
-                                Acessar
-                            </a>
+                            <div class="mt-auto">
+
+                                <a href="{% url 'lista_manutencoes' %}"
+                                   class="btn btn-primary">
+                                    Acessar
+                                </a>
+
+                            </div>
 
                         </div>
 
@@ -363,11 +400,11 @@
 
                 </div>
 
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
 
                     <div class="card shadow-sm h-100">
 
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
 
                             <h5 class="card-title">
                                 <i class="bi bi-people"></i>
@@ -378,9 +415,14 @@
                                 Gerencie os usuários e suas permissões de acesso.
                             </p>
 
-                            <a href="{% url 'lista_usuarios' %}" class="btn btn-primary">
-                                Acessar
-                            </a>
+                            <div class="mt-auto">
+
+                                <a href="{% url 'lista_usuarios' %}"
+                                   class="btn btn-primary">
+                                    Acessar
+                                </a>
+
+                            </div>
 
                         </div>
 
@@ -388,11 +430,11 @@
 
                 </div>
 
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6">
 
                     <div class="card shadow-sm h-100">
 
-                        <div class="card-body">
+                        <div class="card-body d-flex flex-column">
 
                             <h5 class="card-title">
                                 <i class="bi bi-file-earmark-bar-graph"></i>
@@ -403,9 +445,14 @@
                                 Gere, consulte e exporte relatórios do sistema de controle de estoque.
                             </p>
 
-                            <a href="{% url 'relatorios' %}" class="btn btn-primary">
-                                Acessar
-                            </a>
+                            <div class="mt-auto">
+
+                                <a href="{% url 'relatorios' %}"
+                                   class="btn btn-primary">
+                                    Acessar
+                                </a>
+
+                            </div>
 
                         </div>
 
@@ -417,7 +464,7 @@
 
         </div>
 
-    </div>
+    </main>
 
 </body>
 </html>

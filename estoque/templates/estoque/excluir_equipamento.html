@@ -3,49 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excluir Equipamento - Estoque Maker</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <title>Excluir equipamento - Estoque Maker</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
+
 <body class="bg-light">
 
-<nav class="navbar navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">
-            Estoque Maker
-        </a>
-    </div>
-</nav>
-
-<main class="container mt-5">
-    <div class="card border-danger">
-        <div class="card-body">
-            <h2 class="text-danger">Excluir equipamento</h2>
-
-            <p>
-                Tem certeza de que deseja excluir
-                <strong>{{ equipamento.nome }}</strong>?
-            </p>
-
-            <p class="text-muted">
-                Esta ação não poderá ser desfeita.
-            </p>
-
-            <form method="POST">
-                {% csrf_token %}
-
-                <button type="submit" class="btn btn-danger">
-                    Confirmar exclusão
-                </button>
-
-                <a href="{% url 'lista_equipamentos' %}"
-                   class="btn btn-secondary">
-                    Cancelar
-                </a>
-            </form>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                Controle de Estoque - Espaço Maker
+            </a>
         </div>
-    </div>
-</main>
+    </nav>
+
+    <main class="container mt-4 mb-5">
+
+        <h2>Excluir equipamento</h2>
+
+        <p class="text-muted">
+            Confirme a exclusão do equipamento selecionado.
+        </p>
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+        <div class="card border-danger shadow-sm mt-4">
+
+            <div class="card-body">
+
+                <p>
+                    Tem certeza de que deseja excluir
+                    <strong>{{ equipamento.nome }}</strong>?
+                </p>
+
+                <div class="alert alert-danger">
+
+                    Esta ação não poderá ser desfeita.
+                    Equipamentos com registros de empréstimos ou
+                    manutenções não poderão ser excluídos.
+
+                </div>
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+
+                        <button type="submit" class="btn btn-danger">
+                            Confirmar exclusão
+                        </button>
+
+                        <a href="{% url 'lista_equipamentos' %}"
+                           class="btn btn-secondary">
+                            Cancelar
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </main>
 
 </body>
 </html>

@@ -19,18 +19,27 @@
         </div>
     </nav>
 
-    <div class="container mt-4 mb-5">
+    <main class="container mt-4 mb-5">
 
-        <h2>
-            <i class="bi bi-file-earmark-bar-graph"></i>
-            Relatórios
-        </h2>
+        <h2>Relatórios</h2>
 
         <p class="text-muted">
-            Consulte e filtre os dados do sistema de controle de estoque.
+            Consulte, filtre e exporte os dados do sistema de controle de estoque.
         </p>
 
-        <div class="card shadow-sm mb-4">
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">
+                    {{ message }}
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+        <div class="card shadow-sm mt-4 mb-4">
 
             <div class="card-header">
                 <strong>Filtros do relatório</strong>
@@ -44,7 +53,7 @@
 
                         <div class="col-md-4">
 
-                            <label for="tipo" class="form-label">
+                            <label class="form-label" for="tipo">
                                 Tipo de relatório
                             </label>
 
@@ -65,7 +74,7 @@
 
                         <div class="col-md-2" id="campo_inicio">
 
-                            <label for="data_inicio" class="form-label">
+                            <label class="form-label" for="data_inicio">
                                 Data inicial
                             </label>
 
@@ -79,7 +88,7 @@
 
                         <div class="col-md-2" id="campo_fim">
 
-                            <label for="data_fim" class="form-label">
+                            <label class="form-label" for="data_fim">
                                 Data final
                             </label>
 
@@ -93,7 +102,7 @@
 
                         <div class="col-md-4" id="campo_situacao">
 
-                            <label for="situacao" class="form-label">
+                            <label class="form-label" for="situacao">
                                 Situação
                             </label>
 
@@ -119,11 +128,6 @@
                             Limpar filtros
                         </a>
 
-                        <a href="{% url 'home' %}"
-                           class="btn btn-secondary">
-                            Voltar ao painel
-                        </a>
-
                     </div>
 
                 </form>
@@ -142,7 +146,7 @@
 
         {% if dados %}
 
-            <div class="d-flex flex-wrap gap-2 mb-3">
+            <div class="d-flex flex-wrap gap-2 mb-4">
 
                 <a href="{% url 'relatorios' %}?tipo={{ tipo|urlencode }}&amp;data_inicio={{ data_inicio|urlencode }}&amp;data_fim={{ data_fim|urlencode }}&amp;situacao={{ situacao|urlencode }}&amp;exportar=csv"
                    class="btn btn-success">
@@ -162,9 +166,9 @@
 
             </div>
 
-            <div class="card shadow-sm">
+            <div class="card shadow-sm mb-4">
 
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
 
                     <strong>{{ dados.titulo }}</strong>
 
@@ -186,7 +190,7 @@
 
                                     {% for cabecalho in dados.cabecalhos %}
 
-                                        <th>{{ cabecalho }}</th>
+                                        <th scope="col">{{ cabecalho }}</th>
 
                                     {% endfor %}
 
@@ -235,7 +239,11 @@
 
         {% endif %}
 
-    </div>
+        <a href="{% url 'home' %}" class="btn btn-secondary">
+            Voltar ao painel
+        </a>
+
+    </main>
 
     <script>
 
