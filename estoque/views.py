@@ -12,7 +12,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib.auth.models import User
 from django.contrib.auth import update_session_auth_hash
 from datetime import date
-from .relatorios import TIPOS_RELATORIO, gerar_dados_relatorio
+from .relatorios import TIPOS_RELATORIO, gerar_dados_relatorio, exportar_csv, exportar_pdf
 
 from .models import (
     Material,
@@ -1172,7 +1172,20 @@ def relatorios(request):
 
     except ValueError:
         erro = "Informe datas válidas."
+   
+    if dados is not None and request.GET.get("exportar") == "csv":
+        return exportar_csv(dados, tipo)
 
+    if dados is not None and request.GET.get("exportar") == "pdf":
+        return exportar_pdf(
+            dados,
+            tipo,
+            request.user,
+            inicio,
+            fim,
+            situacao
+        )
+    
     return render(
         request,
         "estoque/relatorios.html",

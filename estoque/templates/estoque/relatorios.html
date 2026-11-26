@@ -31,6 +31,7 @@
         </p>
 
         <div class="card shadow-sm mb-4">
+
             <div class="card-header">
                 <strong>Filtros do relatório</strong>
             </div>
@@ -42,6 +43,7 @@
                     <div class="row g-3">
 
                         <div class="col-md-4">
+
                             <label for="tipo" class="form-label">
                                 Tipo de relatório
                             </label>
@@ -49,16 +51,20 @@
                             <select name="tipo" id="tipo" class="form-select">
 
                                 {% for valor, nome in tipos_relatorio.items %}
+
                                     <option value="{{ valor }}"
                                         {% if tipo == valor %}selected{% endif %}>
                                         {{ nome }}
                                     </option>
+
                                 {% endfor %}
 
                             </select>
+
                         </div>
 
                         <div class="col-md-2" id="campo_inicio">
+
                             <label for="data_inicio" class="form-label">
                                 Data inicial
                             </label>
@@ -68,9 +74,11 @@
                                    id="data_inicio"
                                    class="form-control"
                                    value="{{ data_inicio }}">
+
                         </div>
 
                         <div class="col-md-2" id="campo_fim">
+
                             <label for="data_fim" class="form-label">
                                 Data final
                             </label>
@@ -80,9 +88,11 @@
                                    id="data_fim"
                                    class="form-control"
                                    value="{{ data_fim }}">
+
                         </div>
 
                         <div class="col-md-4" id="campo_situacao">
+
                             <label for="situacao" class="form-label">
                                 Situação
                             </label>
@@ -91,6 +101,7 @@
                                     id="situacao"
                                     class="form-select">
                             </select>
+
                         </div>
 
                     </div>
@@ -118,15 +129,38 @@
                 </form>
 
             </div>
+
         </div>
 
         {% if erro %}
+
             <div class="alert alert-danger">
                 {{ erro }}
             </div>
+
         {% endif %}
 
         {% if dados %}
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+
+                <a href="{% url 'relatorios' %}?tipo={{ tipo|urlencode }}&amp;data_inicio={{ data_inicio|urlencode }}&amp;data_fim={{ data_fim|urlencode }}&amp;situacao={{ situacao|urlencode }}&amp;exportar=csv"
+                   class="btn btn-success">
+
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    Exportar CSV
+
+                </a>
+
+                <a href="{% url 'relatorios' %}?tipo={{ tipo|urlencode }}&amp;data_inicio={{ data_inicio|urlencode }}&amp;data_fim={{ data_fim|urlencode }}&amp;situacao={{ situacao|urlencode }}&amp;exportar=pdf"
+                   class="btn btn-danger">
+
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Exportar PDF
+
+                </a>
+
+            </div>
 
             <div class="card shadow-sm">
 
@@ -147,11 +181,17 @@
                         <table class="table table-bordered table-striped align-middle mb-0">
 
                             <thead class="table-dark">
+
                                 <tr>
+
                                     {% for cabecalho in dados.cabecalhos %}
+
                                         <th>{{ cabecalho }}</th>
+
                                     {% endfor %}
+
                                 </tr>
+
                             </thead>
 
                             <tbody>
@@ -159,18 +199,26 @@
                                 {% for linha in dados.linhas %}
 
                                     <tr>
+
                                         {% for valor in linha %}
+
                                             <td>{{ valor }}</td>
+
                                         {% endfor %}
+
                                     </tr>
 
                                 {% empty %}
 
                                     <tr>
+
                                         <td colspan="{{ dados.cabecalhos|length }}"
                                             class="text-center text-muted">
+
                                             Nenhum registro encontrado.
+
                                         </td>
+
                                     </tr>
 
                                 {% endfor %}
@@ -190,6 +238,7 @@
     </div>
 
     <script>
+
         const tipo = document.getElementById("tipo");
         const situacao = document.getElementById("situacao");
         const dataInicio = document.getElementById("data_inicio");
@@ -202,28 +251,34 @@
         const situacaoInicial = "{{ situacao|escapejs }}";
 
         const opcoes = {
+
             estoque: [
                 ["todos", "Todos"]
             ],
+
             estoque_critico: [
                 ["todos", "Todos"]
             ],
+
             movimentacoes: [
                 ["todos", "Todos"],
                 ["entrada", "Entradas"],
                 ["saida", "Saídas"]
             ],
+
             emprestimos: [
                 ["todos", "Todos"],
                 ["ativos", "Ativos"],
                 ["atrasados", "Atrasados"],
                 ["devolvidos", "Devolvidos"]
             ],
+
             manutencoes: [
                 ["todos", "Todas"],
                 ["ativas", "Em andamento"],
                 ["finalizadas", "Finalizadas"]
             ]
+
         };
 
         function atualizarFiltros(valorSelecionado = "todos") {
@@ -255,6 +310,7 @@
                 situacao.appendChild(option);
 
             });
+
         }
 
         tipo.addEventListener("change", function() {
@@ -262,6 +318,7 @@
         });
 
         atualizarFiltros(situacaoInicial);
+
     </script>
 
 </body>

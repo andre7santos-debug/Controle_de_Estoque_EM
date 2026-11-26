@@ -1,15 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Controle de Estoque - Espaço Maker</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
@@ -21,73 +18,55 @@
                 Controle de Estoque - Espaço Maker
             </a>
 
-            {% if user.is_authenticated %}
+            <div class="d-flex align-items-center gap-3">
 
-                <div class="d-flex align-items-center gap-3">
+                <span class="text-white">
+                    <i class="bi bi-person-circle"></i>
+                    {{ user.username }}
+                </span>
 
-                    <span class="navbar-text text-white">
-
-                        <i class="bi bi-person-circle"></i>
-
-                        {{ user.username }}
-
-                        {% if user.is_staff %}
-
-                            <span class="badge bg-light text-primary">
-                                Administrador
-                            </span>
-
-                        {% else %}
-
-                            <span class="badge bg-light text-secondary">
-                                Usuário comum
-                            </span>
-
-                        {% endif %}
-
+                {% if user.is_staff %}
+                    <span class="badge bg-light text-primary">
+                        Administrador
                     </span>
+                {% else %}
+                    <span class="badge bg-light text-primary">
+                        Usuário comum
+                    </span>
+                {% endif %}
 
-                    <form method="POST" action="{% url 'logout' %}">
+                <form method="POST" action="{% url 'logout' %}" class="mb-0">
 
-                        {% csrf_token %}
+                    {% csrf_token %}
 
-                        <button type="submit" class="btn btn-outline-light">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Sair
-                        </button>
+                    <button type="submit" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Sair
+                    </button>
 
-                    </form>
+                </form>
 
-                </div>
-
-            {% else %}
-
-                <a href="{% url 'login' %}" class="btn btn-outline-light">
-                    <i class="bi bi-box-arrow-in-right"></i>
-                    Entrar
-                </a>
-
-            {% endif %}
+            </div>
 
         </div>
     </nav>
 
-    <div class="container mt-4 mb-4">
+    <div class="container mt-4 mb-5">
 
         {% if user.is_staff %}
 
-            <h2 class="mb-2">Painel Administrativo</h2>
+            <h2>Painel Administrativo</h2>
 
-            <p class="text-muted mb-4">
-                Sistema de Controle de Estoque do Espaço Maker.
+            <p class="text-muted">
+                Gerencie os materiais, equipamentos e demais funcionalidades do Espaço Maker.
             </p>
 
         {% else %}
 
-            <h2 class="mb-2">Painel de Consulta</h2>
+            <h2>Painel de Consulta</h2>
 
-            <p class="text-muted mb-4">
-                Consulte os materiais, categorias e equipamentos do Espaço Maker.
+            <p class="text-muted">
+                Consulte os materiais, equipamentos e categorias do Espaço Maker.
             </p>
 
         {% endif %}
@@ -96,7 +75,7 @@
 
             {% for message in messages %}
 
-                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags|default:'info' }}{% endif %}">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">
                     {{ message }}
                 </div>
 
@@ -108,27 +87,47 @@
 
             <div class="alert alert-warning">
 
-                <h6 class="fw-bold">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Atenção: estoque mínimo!
-                </h6>
+                <h5>
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Alerta de estoque baixo
+                </h5>
 
                 <p>
-                    Existem {{ total_alertas }} material(is) com estoque crítico.
+                    Existem {{ total_alertas }} material(is) com estoque baixo ou esgotado.
                 </p>
 
-                {% for material in materiais_criticos %}
+                <ul>
 
-                    <p class="mb-2">
-                        &bull; {{ material.nome }} —
-                        {{ material.quantidade }}
-                        {{ material.unidade_medida }}
-                    </p>
+                    {% for material in materiais_criticos %}
 
-                {% endfor %}
+                        <li>
 
-                <a href="{% url 'lista_materiais' %}"
-                   class="btn btn-warning btn-sm mt-2">
+                            <strong>{{ material.nome }}</strong> —
+                            {{ material.quantidade }} {{ material.unidade_medida }}
+
+                            (Estoque mínimo: {{ material.estoque_minimo }})
+
+                            {% if material.quantidade == 0 %}
+
+                                <span class="badge bg-danger">
+                                    Esgotado
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Estoque baixo
+                                </span>
+
+                            {% endif %}
+
+                        </li>
+
+                    {% endfor %}
+
+                </ul>
+
+                <a href="{% url 'lista_materiais' %}" class="btn btn-warning btn-sm">
                     Consultar materiais
                 </a>
 
@@ -136,236 +135,282 @@
 
         {% endif %}
 
-        {% if user.is_staff and total_atrasados > 0 %}
+        {% if user.is_staff %}
 
-            <div class="alert alert-danger">
+            {% if total_atrasados > 0 %}
 
-                <h6 class="fw-bold">
-                    <i class="bi bi-exclamation-circle"></i>
-                    Atenção: empréstimos atrasados!
-                </h6>
+                <div class="alert alert-danger">
 
-                <p>
-                    Existem {{ total_atrasados }} empréstimo(s)
-                    com prazo de devolução vencido.
-                </p>
+                    <h5>
+                        <i class="bi bi-clock-history"></i>
+                        Empréstimos atrasados
+                    </h5>
 
-                {% for emprestimo in emprestimos_atrasados %}
-
-                    <p class="mb-2">
-                        &bull; {{ emprestimo.equipamento.nome }} —
-                        Previsão de devolução:
-                        {{ emprestimo.previsao_devolucao|date:"d/m/Y" }}
+                    <p>
+                        Existem {{ total_atrasados }} empréstimo(s) com devolução atrasada.
                     </p>
 
-                {% endfor %}
+                    <ul>
 
-                <a href="{% url 'lista_emprestimos' %}?situacao=atrasados"
-                   class="btn btn-danger btn-sm mt-2">
-                    Consultar empréstimos atrasados
-                </a>
+                        {% for emprestimo in emprestimos_atrasados %}
 
-            </div>
+                            <li>
+
+                                <strong>{{ emprestimo.equipamento.nome }}</strong> —
+                                {{ emprestimo.solicitante }}
+
+                                (Previsão de devolução:
+                                {{ emprestimo.previsao_devolucao|date:"d/m/Y" }})
+
+                            </li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                    <a href="{% url 'lista_emprestimos' %}?situacao=atrasados"
+                       class="btn btn-danger btn-sm">
+                        Consultar empréstimos atrasados
+                    </a>
+
+                </div>
+
+            {% endif %}
 
         {% endif %}
 
-        <div class="row g-3">
+        <div class="row mt-4">
 
-            <div class="col-md-6">
-                <div class="card h-100">
+            <div class="col-md-6 mb-4">
+
+                <div class="card shadow-sm h-100">
+
                     <div class="card-body">
 
-                        <i class="bi bi-box-seam fs-4"></i>
-
-                        <h5 class="mt-2">Materiais</h5>
+                        <h5 class="card-title">
+                            <i class="bi bi-box-seam"></i>
+                            Materiais
+                        </h5>
 
                         {% if user.is_staff %}
 
-                            <p>
-                                Consultar e gerenciar materiais do estoque.
+                            <p class="card-text">
+                                Consulte e gerencie os materiais do estoque.
                             </p>
 
                         {% else %}
 
-                            <p>
-                                Consultar materiais e quantidades disponíveis.
+                            <p class="card-text">
+                                Consulte os materiais e suas quantidades disponíveis.
                             </p>
 
                         {% endif %}
 
-                        <a href="{% url 'lista_materiais' %}"
-                           class="btn btn-primary">
-
-                            {% if user.is_staff %}
-                                Acessar
-                            {% else %}
-                                Consultar
-                            {% endif %}
-
+                        <a href="{% url 'lista_materiais' %}" class="btn btn-primary">
+                            Acessar
                         </a>
 
                     </div>
+
                 </div>
+
             </div>
 
-            <div class="col-md-6">
-                <div class="card h-100">
+            <div class="col-md-6 mb-4">
+
+                <div class="card shadow-sm h-100">
+
                     <div class="card-body">
 
-                        <i class="bi bi-collection fs-4"></i>
-
-                        <h5 class="mt-2">Categorias</h5>
+                        <h5 class="card-title">
+                            <i class="bi bi-folder"></i>
+                            Categorias
+                        </h5>
 
                         {% if user.is_staff %}
 
-                            <p>
-                                Organizar categorias de materiais e equipamentos.
+                            <p class="card-text">
+                                Organize as categorias de materiais e equipamentos.
                             </p>
 
                         {% else %}
 
-                            <p>
-                                Consultar categorias de materiais e equipamentos.
+                            <p class="card-text">
+                                Consulte as categorias cadastradas no sistema.
                             </p>
 
                         {% endif %}
 
-                        <a href="{% url 'lista_categorias' %}"
-                           class="btn btn-primary">
-
-                            {% if user.is_staff %}
-                                Acessar
-                            {% else %}
-                                Consultar
-                            {% endif %}
-
+                        <a href="{% url 'lista_categorias' %}" class="btn btn-primary">
+                            Acessar
                         </a>
 
                     </div>
+
                 </div>
+
             </div>
 
-            <div class="col-md-6">
-                <div class="card h-100">
+            <div class="col-md-6 mb-4">
+
+                <div class="card shadow-sm h-100">
+
                     <div class="card-body">
 
-                        <i class="bi bi-tools fs-4"></i>
-
-                        <h5 class="mt-2">Equipamentos</h5>
+                        <h5 class="card-title">
+                            <i class="bi bi-tools"></i>
+                            Equipamentos
+                        </h5>
 
                         {% if user.is_staff %}
 
-                            <p>
-                                Consultar e gerenciar equipamentos.
+                            <p class="card-text">
+                                Consulte e gerencie os equipamentos do Espaço Maker.
                             </p>
 
                         {% else %}
 
-                            <p>
-                                Consultar equipamentos e suas disponibilidades.
+                            <p class="card-text">
+                                Consulte os equipamentos e suas situações de disponibilidade.
                             </p>
 
                         {% endif %}
 
-                        <a href="{% url 'lista_equipamentos' %}"
-                           class="btn btn-primary">
-
-                            {% if user.is_staff %}
-                                Acessar
-                            {% else %}
-                                Consultar
-                            {% endif %}
-
+                        <a href="{% url 'lista_equipamentos' %}" class="btn btn-primary">
+                            Acessar
                         </a>
 
                     </div>
+
                 </div>
+
             </div>
 
             {% if user.is_staff %}
 
-                <div class="col-md-6">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
                         <div class="card-body">
 
-                            <i class="bi bi-arrow-left-right fs-4"></i>
+                            <h5 class="card-title">
+                                <i class="bi bi-arrow-left-right"></i>
+                                Movimentações
+                            </h5>
 
-                            <h5 class="mt-2">Movimentações</h5>
-
-                            <p>
-                                Consultar o histórico de entradas e saídas.
+                            <p class="card-text">
+                                Consulte o histórico de entradas e saídas de materiais.
                             </p>
 
-                            <a href="{% url 'lista_movimentacoes' %}"
-                               class="btn btn-primary">
+                            <a href="{% url 'lista_movimentacoes' %}" class="btn btn-primary">
                                 Acessar
                             </a>
 
                         </div>
+
                     </div>
+
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
                         <div class="card-body">
 
-                            <i class="bi bi-calendar-check fs-4"></i>
+                            <h5 class="card-title">
+                                <i class="bi bi-calendar-check"></i>
+                                Empréstimos
+                            </h5>
 
-                            <h5 class="mt-2">Empréstimos</h5>
-
-                            <p>
-                                Controlar empréstimos e devoluções.
+                            <p class="card-text">
+                                Controle os empréstimos e devoluções de equipamentos.
                             </p>
 
-                            <a href="{% url 'lista_emprestimos' %}"
-                               class="btn btn-primary">
+                            <a href="{% url 'lista_emprestimos' %}" class="btn btn-primary">
                                 Acessar
                             </a>
 
                         </div>
+
                     </div>
+
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
                         <div class="card-body">
 
-                            <i class="bi bi-wrench-adjustable fs-4"></i>
+                            <h5 class="card-title">
+                                <i class="bi bi-wrench-adjustable"></i>
+                                Manutenções
+                            </h5>
 
-                            <h5 class="mt-2">Manutenções</h5>
-
-                            <p>
-                                Controlar manutenções e consultar o histórico.
+                            <p class="card-text">
+                                Controle as manutenções dos equipamentos e consulte o histórico.
                             </p>
 
-                            <a href="{% url 'lista_manutencoes' %}"
-                               class="btn btn-primary">
+                            <a href="{% url 'lista_manutencoes' %}" class="btn btn-primary">
                                 Acessar
                             </a>
 
                         </div>
+
                     </div>
+
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card h-100">
+                <div class="col-md-6 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
                         <div class="card-body">
 
-                            <i class="bi bi-people fs-4"></i>
+                            <h5 class="card-title">
+                                <i class="bi bi-people"></i>
+                                Usuários
+                            </h5>
 
-                            <h5 class="mt-2">Usuários</h5>
-
-                            <p>
-                                Gerenciar usuários e permissões de acesso.
+                            <p class="card-text">
+                                Gerencie os usuários e suas permissões de acesso.
                             </p>
 
-                            <a href="{% url 'lista_usuarios' %}"
-                               class="btn btn-primary">
+                            <a href="{% url 'lista_usuarios' %}" class="btn btn-primary">
                                 Acessar
                             </a>
 
                         </div>
+
                     </div>
+
+                </div>
+
+                <div class="col-md-6 mb-4">
+
+                    <div class="card shadow-sm h-100">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                <i class="bi bi-file-earmark-bar-graph"></i>
+                                Relatórios
+                            </h5>
+
+                            <p class="card-text">
+                                Gere, consulte e exporte relatórios do sistema de controle de estoque.
+                            </p>
+
+                            <a href="{% url 'relatorios' %}" class="btn btn-primary">
+                                Acessar
+                            </a>
+
+                        </div>
+
+                    </div>
+
                 </div>
 
             {% endif %}
@@ -373,8 +418,6 @@
         </div>
 
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
